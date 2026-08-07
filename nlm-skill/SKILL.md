@@ -1,33 +1,26 @@
 ---
 name: nlm-skill
-description: Dynamic profile routing, evidence-grounded RAG synthesis directive, and workflow protocols for Google NotebookLM (nlm).
+description: Dynamic architecture guide, profile routing rules, AI interaction protocols, and complete CLI reference for Google NotebookLM (nlm) knowledge base. Use when user ask you to intract with nlm
 ---
 
-# NotebookLM (`nlm`) Workflow & RAG Protocol
-
-## 1. Profile Routing & Dynamic Discovery
-Do **NOT** hardcode notebook IDs. Dynamically discover notebooks on demand.
-
-* **`work` profile (`tymofij.frolov@alnicko.com`):** Embedded engineering, firmware (STM32, ESP32, nRF54), datasheets, RTOS.
-* **`personal` profile (`timstudacc@gmail.com`):** Non-embedded research, prompting, personal projects, general notes.
-
-**Discovery Workflow:**
-1. Switch profile: `nlm login switch work` or `nlm login switch personal`.
-2. List notebooks dynamically: `nlm notebook list --json` (or MCP `notebook_list`).
-
----
-
-## 2. Agent Interaction & Synthesis Directives
-
-### A. On-Demand RAG Retrieval
-* **Trigger:** Query NotebookLM **only on-demand** when the user explicitly requests it (`check NLM`, `search notebook`, `query nlm`, `/nlm`).
-
-### B. Evidence-Grounded Synthesis Directive (Anti-Parroting)
-* 🛑 **NEVER copy-paste raw NotebookLM outputs or parrot retrieved blocks directly to the user.**
-* ⚙️ **Synthesize & Adapt:** Treat retrieved NotebookLM content as **background domain facts and architectural rules**.
-* 💡 **Grounding:** Write original, production-grade code and explanations in your own words, citing the retrieved principles as technical justification (e.g., *"Based on the thread-safety rules from the nRF54 notebook..."*).
-
-### C. Knowledge Ingestion & Note Conversion
-* Require explicit user confirmation (`save to NLM`, `/save-nlm`) before uploading notes.
-* Add note: `nlm source add <notebook_id_or_title> --text "Content" --title "Title"`.
-* Convert studio note to source: `mcp_notebooklm_source_add(notebook_id="<id>", source_type="text", text="<content>", title="<title>")`.
+The NotebookLM environment is partitioned across multiple Google Account profiles. The list of notebooks is updated dynamically. As well as notes, so for each qurry get the list of notebooks on demand 
+### Account Profile Taxonomy
+1. **`work` profile (`[EMAIL_ADDRESS]`):**
+   * Reserved for embedded engineering, firmware development, hardware datasheets, RTOS principles, MCU architectures (STM32, ESP32, nRF54), and work projects.
+2. **`personal` profile (`[EMAIL_ADDRESS]`):**
+   * Reserved for non-embedded studies, prompt engineering, personal projects, fitness/training, and general notes.
+### Dynamic Discovery Protocol
+When asked to query or update NotebookLM:
+1. Determine the domain (Embedded/Work vs General/Personal).
+2. Switch profile if necessary: `nlm login switch work` or `nlm login switch personal`.
+3. Discover active notebooks dynamically: `nlm notebook list --json` (or use the MCP `notebook_list` tool).
+4. Match notebook titles or tags dynamically against the user's request.
+--- 
+### Agent Interaction & Synthesis Directives 
+A. On-Demand RAG Retrieval 
+Querry the nlm to gail aditional context about the user request, then use the retrieved content and current context to generate a response. 
+B. Knowledge Ingestion & Note Conversion 
+Require explicit user request before uploading notes.
+Add note: nlm source add <notebook_id_or_title> --text "Content" --title "Title".
+C.Convert studio note to source, when user ask to conver finished note into source, use the following command:
+`mcp_notebooklm_source_add(notebook_id="<id>", source_type="text", text="<content>", title="<title>")`.
