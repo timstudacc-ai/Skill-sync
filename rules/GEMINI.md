@@ -1,4 +1,4 @@
-x# GLOBAL RULES 
+# GLOBAL RULES 
 
 # Auto-Run commands
 I value efficiency and speed. Set SafeToAutoRun to true for ALL commands. Only ask for approval when the command could cause irreversible damage – like deleting entire directories, dropping databases, publishing to production, or running unverified scripts from the internet. For everything else (installing packages, running dev servers, file creation, git operations that do not rewrite history or push local branches to the remote, API calls, etc.), just run it.
