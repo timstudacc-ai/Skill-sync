@@ -73,22 +73,23 @@ After presenting the synthesized response:
 
 ## Memory Bank Protocol
 
-Each project has ONE notebook for its memory bank: **Studio notes** are the canonical editable form; **sources** are the queryable snapshot.
-The structure of emory bank intself is described in memory-bank skill
+Each project has ONE notebook. Memory bank lives as **Google Docs** in a Drive folder, added as Drive sources — auto-synced, no manual delete/re-add. The structure of the memory bank itself is described in the memory-bank skill.
 
 ### Notebook Taxonomy
-- `"<Project Name>"` — memory bank (notes → sources, updated each session)
+- `"<Project Name>"` — memory bank (Drive sources, auto-synced)
 - `"<Topic> docs (for Agent)"` — documentation for AI queries
 - `"<Topic> docs (Human readable)"` — documentation for human reading
 
 ### Lifecycle
-- **Create:** `note create` → `source_add --type text`
-- **Update:** edit the note → `source delete --confirm` (old source) → `source_add --type text` (from updated note content)
-- **Trigger:** auto-update at end of every coding session, or on `update memory bank` / `save progress`
+- **Create:** Create Google Doc in Drive folder → `source add <nb> --drive <doc_id> --type doc`
+- **Update:** Edit the Google Doc in browser/Drive → `source stale <nb>` (check) → `source sync <nb> --confirm`
+- **Trigger:** auto-sync at end of every coding session, or on `update memory bank` / `save progress`
 
-### Note Format
-Write notes as human-readable Markdown using `$'...'` ANSI-C quoting so `\n` renders as real newlines. Never use literal `\n` escape sequences.
+### Drive Setup (per project)
+- Create a Drive folder: `createFolder(name="<Project Name>")`
+- Memory bank files: `projectbrief`, `productContext`, `techContext`, `activeContext`, `systemPatterns`, `progress`, `problemsSolved`
+- Each file is a Google Doc, added as a Drive source to the notebook
 
 ### Knowledge Write-back
-User confirmation required (`save to NLM`, `/save-nlm`): `source_add(notebook_id="<id>", source_type="text", text="<content>", title="<title>")`.
+User confirmation required (`save to NLM`, `/save-nlm`): `source_add --type text` for ad-hoc notes.
 Never upload anything without the user saying so.
