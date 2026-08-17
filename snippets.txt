@@ -1,15 +1,25 @@
 {
-"for loop": {
+"for": {
 "scope": "c",
 "prefix": "for",
 "body": [
-"for (int ${1:i} = 0; ${1:i} < ${2:n}; ${1:i}++) {",
+"for (size_t ${1:i} = 0; ${1:i} < ${2:n}; ${1:i}++) {",
 "\t$0",
 "}"
 ],
-"description": "Indexed for loop"
+"description": "Indexed for loop (linked tab-stops)"
 },
-"for loop over pointer": {
+"forr": {
+"scope": "c",
+"prefix": "forr",
+"body": [
+"for (int ${1:i} = ${2:n} - 1; ${1:i} >= 0; ${1:i}--) {",
+"\t$0",
+"}"
+],
+"description": "Reverse for loop"
+},
+"forp": {
 "scope": "c",
 "prefix": "forp",
 "body": [
@@ -17,9 +27,9 @@
 "\t$0",
 "}"
 ],
-"description": "For loop iterating over a pointer range"
+"description": "For loop over a pointer range"
 },
-"while loop": {
+"while": {
 "scope": "c",
 "prefix": "while",
 "body": [
@@ -29,17 +39,17 @@
 ],
 "description": "While loop"
 },
-"do-while loop": {
+"do": {
 "scope": "c",
-"prefix": "dowhile",
+"prefix": "do",
 "body": [
 "do {",
 "\t$0",
 "} while (${1:condition});"
 ],
-"description": "Do-while loop, body runs at least once"
+"description": "Do-while loop"
 },
-"if statement": {
+"if": {
 "scope": "c",
 "prefix": "if",
 "body": [
@@ -49,9 +59,9 @@
 ],
 "description": "If statement"
 },
-"if-else statement": {
+"iel": {
 "scope": "c",
-"prefix": "ifel",
+"prefix": "iel",
 "body": [
 "if (${1:condition}) {",
 "\t$2",
@@ -61,7 +71,27 @@
 ],
 "description": "If-else statement"
 },
-"switch-case statement": {
+"else": {
+"scope": "c",
+"prefix": "else",
+"body": [
+"else {",
+"\t$0",
+"}"
+],
+"description": "Else clause"
+},
+"elif": {
+"scope": "c",
+"prefix": "elif",
+"body": [
+"else if (${1:condition}) {",
+"\t$0",
+"}"
+],
+"description": "Else-if clause"
+},
+"switch": {
 "scope": "c",
 "prefix": "switch",
 "body": [
@@ -74,9 +104,27 @@
 "\tbreak;",
 "}"
 ],
-"description": "Switch-case statement with default branch"
+"description": "Switch-case with default branch"
 },
-"typedef struct": {
+"arrow": {
+"scope": "c",
+"prefix": "..",
+"body": [
+"->"
+],
+"description": "Fast way to write arrow operator"
+},
+"struct": {
+"scope": "c",
+"prefix": "struct",
+"body": [
+"struct ${1:name} {",
+"\t$0",
+"};"
+],
+"description": "Plain struct declaration"
+},
+"tstruct": {
 "scope": "c",
 "prefix": "tstruct",
 "body": [
@@ -85,9 +133,42 @@
 "} ${2:name}_t;",
 "$0"
 ],
-"description": "Anonymous typedef struct (members via _t suffix)"
+"description": "Anonymous typedef struct (_t suffix)"
 },
-"function definition": {
+"enum": {
+"scope": "c",
+"prefix": "enum",
+"body": [
+"enum ${1:name} {",
+"\t${2:VALUE_0},",
+"\t$0",
+"};"
+],
+"description": "Plain enum declaration"
+},
+"tenum": {
+"scope": "c",
+"prefix": "tenum",
+"body": [
+"typedef enum {",
+"\t${1:VALUE_0},",
+"\t${2:VALUE_1},",
+"} ${3:name}_e;",
+"$0"
+],
+"description": "Anonymous typedef enum (_e suffix)"
+},
+"union": {
+"scope": "c",
+"prefix": "union",
+"body": [
+"union ${1:name} {",
+"\t$0",
+"};"
+],
+"description": "Union declaration"
+},
+"func": {
 "scope": "c",
 "prefix": "func",
 "body": [
@@ -97,91 +178,67 @@
 ],
 "description": "Function definition"
 },
-"enum declaration": {
+"#inc": {
 "scope": "c",
-"prefix": "enum",
+"prefix": "#inc",
 "body": [
-"typedef enum {",
-"\t${1:VALUE_0},",
-"\t${2:VALUE_1},",
-"} ${3:name}_e;",
+"#include \"${1:header.h}\"",
 "$0"
 ],
-"description": "Typedef enum declaration"
+"description": "#include \"local header\""
 },
-"zephyr LOG_MODULE_REGISTER": {
+"#inc<": {
 "scope": "c",
-"prefix": "logmod",
+"prefix": "#inc<",
 "body": [
-"LOG_MODULE_REGISTER(${1:module}, ${2:CONFIG_BT_SVC_LOG_LEVEL});",
+"#include <${1:header}>",
 "$0"
 ],
-"description": "Register a Zephyr log module (include in exactly one <mod>.c)"
+"description": "#include <system header>"
 },
-"zephyr LOG_MODULE_DECLARE": {
+"#def": {
 "scope": "c",
-"prefix": "logdec",
+"prefix": "#def",
 "body": [
-"LOG_MODULE_DECLARE(${1:module}, ${2:CONFIG_BT_SVC_LOG_LEVEL});",
+"#define ${1:NAME} ${2:value}",
 "$0"
 ],
-"description": "Declare a Zephyr log module (in .c files that reuse a module registered elsewhere)"
+"description": "#define object-like macro"
 },
-"zephyr LOG_INF": {
+"#if": {
 "scope": "c",
-"prefix": "logi",
+"prefix": "#if",
 "body": [
-"LOG_INF(\"[${1:Module}] ${2:message}\");",
+"#if ${1:COND}",
+"\t$2",
+"#endif /* ${1:COND} */",
 "$0"
 ],
-"description": "Log an informational message"
+"description": "#if conditional compilation"
 },
-"zephyr LOG_ERR": {
+"#ifdef": {
 "scope": "c",
-"prefix": "loge",
+"prefix": "#ifdef",
 "body": [
-"LOG_ERR(\"[${1:Module}] ${2:message} (err %d)\", ${3:err});",
+"#ifdef ${1:MACRO}",
+"\t$2",
+"#endif /* ${1:MACRO} */",
 "$0"
 ],
-"description": "Log an error message with an errno-style value"
+"description": "#ifdef conditional compilation"
 },
-"designated initializer": {
+"#ifndef": {
 "scope": "c",
-"prefix": "desinit",
+"prefix": "#ifndef",
 "body": [
-"${1:type} ${2:name} = {",
-"\t.${3:field1} = ${4:value1},",
-"\t.${5:field2} = ${6:value2},",
-"\t$0",
-"};"
-],
-"description": "Struct variable initialized with designated .field = value syntax"
-},
-"error check": {
-"scope": "c",
-"prefix": "errchk",
-"body": [
-"int ${1:err} = ${2:func_call};",
-"if (${1:err} < 0) {",
-"\tLOG_ERR(\"[${3:Module}] ${4:msg} (err %d)\", ${1:err});",
-"\treturn ${1:err};",
-"}",
+"#ifndef ${1:MACRO}",
+"\t$2",
+"#endif /* !${1:MACRO} */",
 "$0"
 ],
-"description": "Fail-fast: check errno return, log, and propagate"
+"description": "#ifndef conditional compilation"
 },
-"null-argument guard": {
-"scope": "c",
-"prefix": "nchk",
-"body": [
-"if (!${1:arg1} || !${2:arg2}) {",
-"\treturn -EINVAL;",
-"}",
-"$0"
-],
-"description": "Early-out guard rejecting null/empty input args"
-},
-"header include guard": {
+"guard": {
 "scope": "c",
 "prefix": "guard",
 "body": [
@@ -203,6 +260,78 @@
 "",
 "#endif /* $1 */"
 ],
-"description": "Header include guard with C++ extern scaffold"
+"description": "Full header include guard + extern C scaffold"
+},
+"logmod": {
+"scope": "c",
+"prefix": "logmod",
+"body": [
+"LOG_MODULE_REGISTER(${1:module}, ${2:CONFIG_BT_SVC_LOG_LEVEL});",
+"$0"
+],
+"description": "Zephyr: register log module (one <mod>.c)"
+},
+"logdec": {
+"scope": "c",
+"prefix": "logdec",
+"body": [
+"LOG_MODULE_DECLARE(${1:module}, ${2:CONFIG_BT_SVC_LOG_LEVEL});",
+"$0"
+],
+"description": "Zephyr: declare log module (reuse registered elsewhere)"
+},
+"logi": {
+"scope": "c",
+"prefix": "logi",
+"body": [
+"LOG_INF(\"[${1:Module}] ${2:message}\");",
+"$0"
+],
+"description": "Zephyr: informational log"
+},
+"loge": {
+"scope": "c",
+"prefix": "loge",
+"body": [
+"LOG_ERR(\"[${1:Module}] ${2:message} (err %d)\", ${3:err});",
+"$0"
+],
+"description": "Zephyr: error log with errno value"
+},
+"desinit": {
+"scope": "c",
+"prefix": "desinit",
+"body": [
+"${1:type} ${2:name} = {",
+"\t.${3:field1} = ${4:value1},",
+"\t.${5:field2} = ${6:value2},",
+"\t$0",
+"};"
+],
+"description": "Designated initializer .field = value"
+},
+"errchk": {
+"scope": "c",
+"prefix": "errchk",
+"body": [
+"int ${1:err} = ${2:func_call};",
+"if (${1:err} < 0) {",
+"\tLOG_ERR(\"[${3:Module}] ${4:msg} (err %d)\", ${1:err});",
+"\treturn ${1:err};",
+"}",
+"$0"
+],
+"description": "Fail-fast: check errno, log, propagate"
+},
+"nchk": {
+"scope": "c",
+"prefix": "nchk",
+"body": [
+"if (!${1:arg1} || !${2:arg2}) {",
+"\treturn -EINVAL;",
+"}",
+"$0"
+],
+"description": "Null/empty-arg guard returning -EINVAL"
 }
 }
