@@ -34,13 +34,12 @@ Cline reads skills from **three possible locations** (per the CLI Reference and 
 Clone this repo and copy all skills into the cross-tool global directory:
 
 ```bash
-git clone git@github.com:timstudacc-ai/Skill-sync.git /tmp/skill-sync
-mkdir -p ~/.agents/skills
-rsync -a --delete /tmp/skill-sync/ ~/.agents/skills/
-# Copy the global rules file too
-mkdir -p ~/.agents
-cp /tmp/skill-sync/GEMINI.md ~/.agents/AGENTS.md
-rm -rf /tmp/skill-sync
+git clone git@github.com:timstudacc-ai/Skill-sync.git ~/skill-sync
+cd ~/.agents/skills
+for n in memory-bank nlm nlm-cli-skill notebooklm-sources planning-skill session-report skill-creator socrat; do
+  ln -s ~/skill-sync/$n ~/.agents/skills/$n
+done
+
 ```
 
 **That's it.** Restart Cline and all skills will be discovered automatically.
