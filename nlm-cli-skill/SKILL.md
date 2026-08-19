@@ -23,18 +23,22 @@ Route to the correct profile and discover notebooks dynamically — never hardco
 - `"<Project Name>"` — memory bank (Drive sources, auto-synced)
 - `"<Topic> docs (for Agent)"` — documentation for AI queries
 - `"<Topic> docs (Human readable)"` — documentation for human reading
+### Current ative notebook id's
+"Nrf + zephyr docs (for Agent)" - 1e082400-927c-4694-b3e7-67f04ae62fc5
+"ICM45686 Zephyr Driver" - 8178ecf4-351c-4236-848d-c925d2553797
+"Nrf + zephyr docs (Human readable)" - 16314b9f-2098-4519-8517-3951a9aaf331
+"nRF54L15 DK Schematic and PCB Layout Design" - 2f80b340-4046-4b11-bbc7-c48c97ceae25
+"Cline Complete Documentation and Implementation Guide" - 03b269fb-08ad-4ef1-aab7-0bca0231d386
+"STM32" - 4d3be3eb-621d-43f7-9434-5cd1a41b1343
+"Xbox BLE HID" - a1dc0bb4-4005-4dbf-b8d3-188a4cfd9b05
+"ESP32" - bc4c6332-3689-4672-9238-851d2dd06291
+"ESP-IDF Programming Guide for ESP32 v5.3" - fde61edc-2cba-4acd-9317-bb0c00c2feda
 
 ---
 
 ## Phase 2: Query NotebookLM
 
 Formulate a **detailed, architecturally descriptive question** and query the matched notebook:
-
-- When querying NotebookLM, if the `nlm` CLI query risks exceeding 30 seconds, run it asynchronously:__ launch it in the background with output redirected to a file, e.g. `nohup nlm notebook query <id> "<question>" --timeout 120 > /tmp/nlm_out.json 2>&1 &`, then poll the file (e.g. `sleep 15 && wc -c /tmp/nlm_out.json`) until it's written before reading it — this sidesteps the shell's 30-second command timeout.
-
-- To keep the query token-efficient, read only the `answer` field and discard the citation/reference metadata: after the CLI JSON lands in the file, extract just the answer with `jq -r .answer /tmp/nlm_out.json` (or Python's `json.load(...)['answer']`) and drop `references`, `citations`, `sources_used`, and `question`, which can be ~80% of the payload and provide no value for understanding.
-
-
 
 **Query formulation rules:**
 - Describe the full architecture in detail — state machine structure, RTOS primitives used, thread model, message passing, concurrency controls, and the specific problem you're solving.
@@ -44,6 +48,9 @@ Formulate a **detailed, architecturally descriptive question** and query the mat
 - Do NOT interact with sources directly  — the user manages sources himself.
 - When encountered an error, reffer nlm-cli-ai-ref skill for troubleshooting.
 ---
+NEVER run asynchronious query, "&" at the end of the command s forbiden, each querry should be syncronyous and you should wait until the answer arrives
+nlm notebook query <notebook_id> "<question>" --json | jq -r '.answer'
+- Always sit there and wait until answer
 
 ## Phase 3: Synthesize — NLM + Conversation Context
 
