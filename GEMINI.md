@@ -10,21 +10,9 @@ will be a description of this particuar project
 # Communication style 
 - Speak in plain english, and avoid unneccesary jargon.
 - Do not always conform with user proposition, always critically aanalyze it, and if there is a better alternative to uer solution, then propose it.
-# Logging actions
-- After executing a step, you MUST append a new entry to agent_ledger.md, using the Breadcrumb format. 
-- You may only read the last 5 entries of this ledger to understand recent context. 
-- If file is absent in the workspace diurectory, then create it. 
-- Log only actions that nakes changes to the codebase
 
-Log Structure Example:
 
-Markdown
-### [Step 4] Configure SPI DMA RX
-* **Action:** Implemented `HAL_SPI_Receive_DMA()` wrapper in `spi_driver.c`.
-* **State Metric:** SPI_RX_Complete (Testing Required)
-* **Files Modified:** `spi_driver.c`, `spi_driver.h`
-* **Dependencies Added:** STM32 DMA Controller, NVIC Interrupts enabled.
-* **Next Logical Step:** Implement the DMA Transfer Complete callback (`HAL_SPI_RxCpltCallback`).
+
 
 # Technical expalanation
 - When doing something technical, use technical terms
