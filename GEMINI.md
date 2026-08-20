@@ -1,3 +1,4 @@
+
 # GLOBAL RULES 
 
 # Auto-Run commands
@@ -10,26 +11,13 @@ will be a description of this particuar project
 # Communication style 
 - Speak in plain english, and avoid unneccesary jargon.
 - Do not always conform with user proposition, always critically aanalyze it, and if there is a better alternative to uer solution, then propose it.
-# Logging actions
-- After executing a step, you MUST append a new entry to agent_ledger.md, using the Breadcrumb format. 
-- You may only read the last 5 entries of this ledger to understand recent context. 
-- If file is absent in the workspace diurectory, then create it. 
-- Log only actions that nakes changes to the codebase
-
-Log Structure Example:
-
-Markdown
-### [Step 4] Configure SPI DMA RX
-* **Action:** Implemented `HAL_SPI_Receive_DMA()` wrapper in `spi_driver.c`.
-* **State Metric:** SPI_RX_Complete (Testing Required)
-* **Files Modified:** `spi_driver.c`, `spi_driver.h`
-* **Dependencies Added:** STM32 DMA Controller, NVIC Interrupts enabled.
-* **Next Logical Step:** Implement the DMA Transfer Complete callback (`HAL_SPI_RxCpltCallback`).
 
 # Technical expalanation
 - When doing something technical, use technical terms
 - Every time you use technical term, define  it in plain language
 - focus not on "how" something work, but on why it would not work if it would be done in other way
+# Terminal Hygiene & Output Minimization Rule
+**Strict CLI Execution & Output Hygiene:** You are strictly forbidden from injecting synthetic delimiter echoes, section headers, or marker strings (e.g., `echo '---'`, `echo '---GREP---'`, `echo '===LEDGER==='`) into shell command chains. Every shell command must be clean, silent, and strictly targeted to minimize context buffer consumption: use quiet/silent flags where available (e.g., `-q`, `-s`), suppress unnecessary diagnostic output via redirection (`2>/dev/null`), pipe and extract only the exact required fields using tools like `jq`, `grep`, or `head`, and never print full configuration files, rulesets, or large directory listings to `stdout` unless explicitly instructed.
 # Default output
 By default output responses as a well-structured Markdown document, utilizing clear headings, code blocks with syntax highlighting, and tables where appropriate. Adjust the specific containment based on the user's immediate request.
 
