@@ -29,7 +29,7 @@ Route to the correct profile and discover notebooks dynamically — never hardco
 "Nrf + zephyr docs (Human readable)" - 16314b9f-2098-4519-8517-3951a9aaf331
 "nRF54L15 DK Schematic and PCB Layout Design" - 2f80b340-4046-4b11-bbc7-c48c97ceae25
 "Cline Complete Documentation and Implementation Guide" - 03b269fb-08ad-4ef1-aab7-0bca0231d386
-"STM32" - 4d3be3eb-621d-43f7-9434-5cd1a41b1343
+"STM32" - 4d3be3eb-621d-43f7-9434-5cd1a41b1343yy
 "Xbox BLE HID" - a1dc0bb4-4005-4dbf-b8d3-188a4cfd9b05
 "ESP32" - bc4c6332-3689-4672-9238-851d2dd06291
 "ESP-IDF Programming Guide for ESP32 v5.3" - fde61edc-2cba-4acd-9317-bb0c00c2feda
