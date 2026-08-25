@@ -1,6 +1,6 @@
 ---
 name: google-docs-report
-description: Create corporate reports and documents through the Google Drive MCP server. Use this skill whenever the user asks to write a report, create a corporate document, fill a report template based on measurements/data/logs, or produce any document in Google Docs/Google Drive — even if they don't explicitly mention "report" or "Google Drive". This includes asking for an "отчет", "звіт", "report", "документ", "отчет по исследованию", "energy consumption report", or wanting to summarize measurement logs into a structured document. This skill is especially useful when data comes from CSVs, measurement logs, test results, or hardware experiments that need to be aggregated and presented in a professional report structure.
+description: Creates contend for corporative documnentation, use it whem user asky you to create a report (создать отчет на тему.....)
 ---
 
 # Google Docs Report Creation
@@ -34,24 +34,45 @@ Never load raw 5000-row CSVs into the model context. Aggregate locally first:
 - Write all section text locally
 - Only then generate the document
 
-### 3. Generate the .docx with python-docx
+### 3. Generate the .docx with python-docx (template-based)
 
-Use the bundled template script `scripts/generate_report_docx.py` as the starting point. It builds the full corporate structure with:
-- Title → `doc.add_heading(text, level=0)`
-- Section headings → `doc.add_heading(text, level=1)`, subsections → `level=2`
-- Tables → `doc.add_table()` with a styled header row (bold)
-- Body text → `doc.add_paragraph()`
+**The correct approach: open the original corporate template, then append body content only.**
 
-**Mapping to report style:**
-- Document name → Title (level 0)
-- Section headings → Heading 1, subsections → Heading 2
-- Tables → real tables with bold header row
-- Body text justified, tables/figures centered with captions "Table x. - Опис" / "Fig. x. - Опис"
+The bundled `template/generate_report.py` module does this. It:
+1. Opens the original `.docx` template — preserving the exact front page (title, Document history table, Verification table, Contents) **and** the body section's page setup (landscape/portrait, margins, page size).
+2. Strips the placeholder body from the first Heading 1 onward (or from a custom `start_marker` paragraph).
+3. Appends the report's real sections using the template's built-in styles (Heading 1, Heading 2, Normal).
+4. Tables auto-fit to the section's usable text area (page width − left − right margins), never overflowing.
 
-**Environment note:** python-docx may need a venv if the system Python is protected (PEP 668). Create one if `import docx` fails:
+**API (flat functions — no class wrapper):**
+
+```python
+from generate_report import (
+    new_document, save, verify_integrity,
+    add_heading, add_paragraph, add_bullet_list,
+    add_numbered_list, add_table, add_caption, add_page_break,
+)
+
+doc = new_document()  # opens template, strips placeholder body
+add_heading(doc, "1. Introduction", level=1)
+add_paragraph(doc, "Body text here.")
+add_bullet_list(doc, ["Item 1", "Item 2"])
+add_numbered_list(doc, [("Step 1", " - description"), ("Step 2", 0)])
+add_caption(doc, "Table 1.", "Description")
+add_table(doc, headers=["Col A", "Col B"], rows=[["val1", "val2"]])
+save(doc, "/tmp/Report.docx")
+```
+
+**Using a different template:**
+```python
+doc = new_document("path/to/other_template.docx")
+# or, if the body start isn't at the first Heading 1:
+doc = new_document("path/to/other_template.docx", start_marker="Executive Summary")
+```
+
+**Run with `uv`** (no venv needed):
 ```sh
-python3 -m venv .docxvenv
-.docxvenv/bin/pip install python-docx
+cd template && uv run --with python-docx test_report.py
 ```
 
 ## Report architecture (mandatory)
@@ -96,8 +117,8 @@ Section guidelines:
 3. Write the text of all sections.
 
 ### Step 3. Generate and upload the document
-1. Copy `scripts/generate_report_docx.py` and adapt it: replace the title, section text, and table data with the report's content.
-2. Run it to produce the `.docx` (use the venv python if needed).
+1. Create a local script (or adapt the test template) calling `new_document()`, `add_heading()`, `add_table()`, etc.
+2. Run with `uv run --with python-docx` to produce the `.docx`.
 3. Upload with `uploadFile`:
    ```json
    {
@@ -116,6 +137,8 @@ Section guidelines:
 ## Notes
 
 - **Never** build a long document with `createDocFromHTML` or `createGoogleDoc` — they fail on large content. Use the .docx + upload path.
+- **Anti-pattern: per-cell MCP table calls.** Using `insertTable` + 18 `editTableCell` calls for a 9×2 table is an anti-pattern (27 MCP calls total). Build the table locally with `add_table()` in python-docx, then upload the `.docx` once. Total MCP calls: 1 upload, not 27.
+- **Never rebuild the title page.** The original `CD_Report_template.docx` has a precisely styled front page (corporate logo, header fields, Document history, Verification tables). The Python script should open this template and only strip/replace content from the first Heading 1 onward. Do not try to recreate pages 1–2 from scratch.
 - `uploadFile` with `convertToGoogleFormat:true` converts `.docx` → Google Doc, `.xlsx` → Google Sheet, `.pptx` → Google Slides. It does **not** convert `.html` or `.csv` directly.
 - Document language: Russian (body), English (title-page fields) — unless the user specifies otherwise.
 - Never use `deleteRange` across structural elements (tables, images) — it errors. Use one-shot content replacement instead.

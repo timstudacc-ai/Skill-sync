@@ -1,6 +1,6 @@
 ---
 name: pr-zephyr-reviewer
-description: Uncompromising static analysis and code review for nRF Connect SDK / Zephyr RTOS C code.
+description: Uncompromising static analysis and code review for nRF Connect SDK / Zephyr RTOS C code. Covers engineering correctness, functional safety, real-time reliability, and code hygiene / dead-code audit before a pull request is merged.
 ---
 
 # Zephyr RTOS PR Code Reviewer
@@ -18,6 +18,11 @@ Execute a rigorous static analysis on the C code provided within the `<CODE_TO_R
 3. **Memory & Allocation:** 
    * Flag ANY use of dynamic memory (`k_malloc`) inside ISRs or high-frequency loops. 
    * Prefer statically allocated thread stacks (`K_THREAD_DEFINE`) over dynamic creation where possible. Check for massive local arrays that risk stack overflows.
+4. **Code Hygiene & Dead-Code Audit:** 
+   * Flag duplicate/repeated macros and `#define` symbols that shadow or re-declare an existing symbol.
+   * Flag leftover commented-out code blocks (large `// ...` or `/* ... */` regions that implement dead logic), unreachable branches, and unreferenced functions/variables.
+   * Flag debug leftovers that must not ship: unconditional `printk()`, `LOG_DBG()`, `printf()`, temporary `k_msleep()` tuning values, hard-coded test values, or stub returns.
+   * Flag redundant, duplicate, or nested `#ifdef` guards that add no behavior and muddy readability.
 
 ### Defect Classification & Formatting:
 For every identified defect, classify its severity:

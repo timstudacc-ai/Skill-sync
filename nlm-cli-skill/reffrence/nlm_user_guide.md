@@ -1,8 +1,3 @@
----
-name: nlm
-description: Brief description of what this skill does
-disabled: true
----
 
 ## Gemini Notebook CLI & MCP Expert
 

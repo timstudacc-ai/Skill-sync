@@ -24,16 +24,15 @@ Route to the correct profile and discover notebooks dynamically — never hardco
 - `"<Topic> docs (for Agent)"` — documentation for AI queries
 - `"<Topic> docs (Human readable)"` — documentation for human reading
 ### Current ative notebook id's
-"Nrf + zephyr docs (for Agent)" - 1e082400-927c-4694-b3e7-67f04ae62fc5
-"ICM45686 Zephyr Driver" - 8178ecf4-351c-4236-848d-c925d2553797
+"Copy of Nrf + zephyr docs (Agent readable)" - 45812ea8-0600-4816-b97f-4fe39d61fa9f
 "Nrf + zephyr docs (Human readable)" - 16314b9f-2098-4519-8517-3951a9aaf331
-"nRF54L15 DK Schematic and PCB Layout Design" - 2f80b340-4046-4b11-bbc7-c48c97ceae25
+"ICM45686 Zephyr Driver" - 8178ecf4-351c-4236-848d-c925d2553797
+"Hardware Nrf refference" - 2f80b340-4046-4b11-bbc7-c48c97ceae25
 "Cline Complete Documentation and Implementation Guide" - 03b269fb-08ad-4ef1-aab7-0bca0231d386
-"STM32" - 4d3be3eb-621d-43f7-9434-5cd1a41b1343yy
+"STM32" - 4d3be3eb-621d-43f7-9434-5cd1a41b1343
 "Xbox BLE HID" - a1dc0bb4-4005-4dbf-b8d3-188a4cfd9b05
 "ESP32" - bc4c6332-3689-4672-9238-851d2dd06291
 "ESP-IDF Programming Guide for ESP32 v5.3" - fde61edc-2cba-4acd-9317-bb0c00c2feda
-
 ---
 
 ## Phase 2: Query NotebookLM
@@ -47,10 +46,11 @@ Formulate a **detailed, architecturally descriptive question** and query the mat
 - The goal is to give NLM enough architectural context to provide specific, informed guidance — not generic advice.
 - Do NOT interact with sources directly  — the user manages sources himself.
 - When encountered an error, reffer nlm-cli-ai-ref skill for troubleshooting.
----
-NEVER run asynchronious query, "&" at the end of the command s forbiden, each querry should be syncronyous and you should wait until the answer arrives
-nlm notebook query <notebook_id> "<question>" --json | jq -r '.answer'
+- NEVER run asynchronious query, "&" at the end of the command s forbiden, each querry should be syncronyous and you should wait until the answer arrives nlm notebook query <notebook_id> "<question>" --json --timeout 120 | jq -r '.answer'
 - Always sit there and wait until answer
+
+
+### If encountered an error, refference /refference/nlm_user_guide.md 
 
 ## Phase 3: Synthesize — NLM + Conversation Context
 
