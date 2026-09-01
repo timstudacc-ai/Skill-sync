@@ -1,0 +1,1 @@
+/home/tim/Documents/Cline/Rules/GLOBAL.md
