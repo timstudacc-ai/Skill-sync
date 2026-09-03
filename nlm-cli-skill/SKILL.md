@@ -46,8 +46,7 @@ Formulate a **detailed, architecturally descriptive question** and query the mat
 - The goal is to give NLM enough architectural context to provide specific, informed guidance — not generic advice.
 - Do NOT interact with sources directly  — the user manages sources himself.
 - When encountered an error, reffer nlm-cli-ai-ref skill for troubleshooting.
-- NEVER run asynchronious query, "&" at the end of the command s forbiden, each querry should be syncronyous and you should wait until the answer arrives nlm notebook query <notebook_id> "<question>" --json --timeout 120 | jq -r '.answer'
-- Always sit there and wait until answer
+- NEVER run asynchronious query, "&" at the end of the command s forbiden, each querry should be syncronyous and you should wait until the answer arrives nlm notebook query <notebook_id> "<question>" --json --timeout 180 2>/dev/null | jq -r '.answer' > /tmp/nlm5.txt 2>&1; wc -c /tmp/nlm5.txt; cat /tmp/nlm5.txt
 
 
 ### If encountered an error, refference /refference/nlm_user_guide.md 

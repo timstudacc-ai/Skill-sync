@@ -1,1 +1,1 @@
-/home/tim/Documents/Cline/Rules/GLOBAL.md
+/home/user/Documents/Cline/Rules/GLOBAL.md

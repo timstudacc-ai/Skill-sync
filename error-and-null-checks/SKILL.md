@@ -33,7 +33,7 @@ Any pointer the function receives may be NULL, so guard every pointer parameter 
 
 ```c
 int do_thing(struct device *dev, struct sample *s) {
-  if (dev == NULL || s == NULL) {   /* guard all pointer args up front */
+  if (!dev || !s) {   /* guard all pointer args up front */
     LOG_ERR("do_thing: NULL argument");
     return -EINVAL;
   }

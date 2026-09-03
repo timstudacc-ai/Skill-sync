@@ -42,7 +42,7 @@ format. Files build upon each other in a clear hierarchy:
 - Known issues
 - Evolution of project decisions
 ### Additional Context
-Create additional files/folders within memory-bank/ when they help organize:
+Create additional files/folders within memory_bank/ when they help organize:
 - Complex feature documentation
 - Integration specifications
 - API documentation
@@ -63,15 +63,15 @@ Generate the core foundational files locally:
   Trigger: Session start, "read memory bank", "load context", or "/load-mb".
   Execution (Strictly Local):
   Do NOT query NotebookLM or fetch from Google Drive.
-  Read local markdown files directly from .agents/memory-bank/ using standard workspace file-read tools.
+  Read local markdown files directly from .agents/memory_bank/ using standard workspace file-read tools.
 3. Local Update Protocol
 Trigger: Explicit user request ("update memory bank").
 Execution:
 Inspect recent session changes and git status to identify affected topics:
-Task Switch / State Change ➔ Update .agents/memory-bank/activeContext.md.
-Bug Fix / Completed Feature ➔ Update .agents/memory-bank/progress.md (and log the solution).
-Architectural Pattern / Bitmask Fix ➔ Update .agents/memory-bank/systemPatterns.md.
-Toolchain / Kconfig / Dependency Change ➔ Update .agents/memory-bank/techContext.md.
+Task Switch / State Change ➔ Update .agents/memory_bank/activeContext.md.
+Bug Fix / Completed Feature ➔ Update .agents/memory_bank/progress.md (and log the solution).
+Architectural Pattern / Bitmask Fix ➔ Update .agents/memory_bank/systemPatterns.md.
+Toolchain / Kconfig / Dependency Change ➔ Update .agents/memory_bank/techContext.md.
 Directly edit the local markdown files in the workspace.
 Validate that updates maintain technical precision (keep exact hex masks, function names, and struct definitions).
 4. Freshness Verification Protocol
@@ -83,11 +83,36 @@ git status -s && git log -n 5 --oneline
 Compare the documented system patterns against actual implementation reality in source files (e.g., DTS bindings, Kconfig, CMakeLists, driver headers).
 Identify architectural drift (untracked registers, modified APIs, new workqueues).
 Present a concise markdown delta to the user and apply updates directly to local memory bank files.
-5. Remote verification protocol (syncing)
-Trigger: User ask to push memory bank to the remote or sync memory banl
-  There is a folder on google drive for each project, If there is no one for current project - create.
-  The update all the core documents, append all changes that are on local memory bank.
-  The sync the sources nlm source sync <id> --confirm. (load nlm-cli-skill to see notebook id's)
+5. Remote Sync Protocol (Google Drive backup)
+Trigger: User asks to "push memory bank to remote", "sync memory bank", or "backup memory bank".
+
+Format Rule (MANDATORY):
+Canonical memory bank files are ALWAYS stored in Google Drive as raw markdown
+files (text/plain, .md extension). NEVER convert them to Google Docs —
+Docs store styled text, not markdown, so conversion mangles code blocks,
+tables and backticks and breaks round-trip fidelity. Consumers of the remote
+copy are the agent and NotebookLM, both of which read raw .md/.txt directly.
+
+Execution:
+  1. Locate or create the project folder in Drive:
+     memory-bank/<project_name>/ where <project_name> matches the workspace
+     folder name. Use google-drive__createFolder if it does not exist
+     (createFolder accepts a path like '/memory-bank/<project_name>').
+  2. For each core .md file, find the matching Drive file:
+     searchDrive with rawQuery: name='<file>.md' and
+     mimeType='text/plain' and '<project_name>' in parents.
+     - File exists  -> update IN PLACE: uploadFile(fileId=<existing id>)
+       so the same file ID and revision history are preserved.
+     - File missing -> uploadFile with name and parentFolderId.
+  3. NEVER use append semantics. Drive files are replaced WHOLESALE with the
+     full local content on every sync. The local .agents/memory-bank/ files
+     are the single source of truth; Drive is a mirror only.
+  4. Verify the remote folder listing matches the local file list. Report any
+     Drive files that no longer exist locally (stale copies) and delete them
+     only with explicit user approval.
+  5. Sync NotebookLM sources: nlm source sync <id> --confirm
+     (load nlm-cli-skill to see notebook ids). Raw .md files are valid
+     NotebookLM sources — no conversion is needed or allowed.
 
 
 
