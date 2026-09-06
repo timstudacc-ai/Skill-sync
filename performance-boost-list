@@ -1,0 +1,7 @@
+1. Install preload
+2. Utilize profiles 
+3. Disable desktop shit
+    gsettings set org.gnome.desktop.interface enable-animations false - Disable
+    gsettings set org.gnome.desktop.interface enable-animations true -  False
+4. bleachbit for cleaning shit 
+5. ZRAM
