@@ -32,6 +32,7 @@ from __future__ import annotations
 import os
 
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Pt
@@ -39,7 +40,9 @@ from docx.shared import Pt
 __all__ = [
     "new_document", "save", "verify_integrity",
     "add_heading", "add_paragraph", "add_caption",
-    "add_bullet_list", "add_numbered_list", "add_table", "add_page_break",
+    "add_table_caption", "add_figure_caption",
+    "add_bullet_list", "add_numbered_list", "add_table",
+    "add_glossary_table", "add_page_break",
 ]
 
 # Headings map straight onto the template's built-in styles.
@@ -156,7 +159,13 @@ def _count_front_paragraphs(doc: Document) -> int:
 
 
 def add_heading(doc: Document, text: str, level: int = 1) -> object:
-    """Add a section heading using the template's Heading{level} style."""
+    """Add a section heading using the template's Heading{level} style.
+
+    Corporate review comment #2 — heading numbering convention: every level
+    of the manual number ends with a dot, e.g. ``5.``, ``5.1.``, ``5.1.2.``
+    (``5.1`` without the trailing dot is incorrect). Callers pass the full
+    numbered text; verify numbering style before delivery.
+    """
     style_name = _SECTION_HEADINGS.get(level, f"Heading {level}")
     # Fall back gracefully if the template lacks the exact Heading style.
     if style_name not in doc.styles:
@@ -174,12 +183,17 @@ def add_paragraph(
     italic: bool = False,
     alignment: str | None = None,
 ) -> object:
-    """Add a plain body paragraph (template 'Normal' style)."""
+    """Add a plain body paragraph (template 'Normal' style).
+
+    Corporate formatting rule (Canyon verification / AL Handbook): body text is
+    JUSTIFIED by default so both edges are even. Pass ``alignment="left"`` or
+    ``"center"`` to override (e.g. for centered figure placeholders).
+    """
     p = doc.add_paragraph(text)
     if alignment:
-        from docx.enum.text import WD_ALIGN_PARAGRAPH
-
         p.alignment = getattr(WD_ALIGN_PARAGRAPH, alignment.upper(), None)
+    else:
+        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     for run in p.runs:
         if bold:
             run.bold = True
@@ -201,9 +215,114 @@ def add_caption(doc: Document, label: str, text: str | None = None) -> object:
     return p
 
 
+def add_table_caption(doc: Document, label: str, text: str | None = None) -> object:
+    """Caption for a data table — LEFT-aligned (corporate review comment #5).
+
+    Renders as ``Table N. - Description``. The label part (``Table N.``) is
+    BOLD + italic, the description is italic (review round 2).
+    """
+    return _add_caption(doc, label, text, WD_ALIGN_PARAGRAPH.LEFT)
+
+
+def add_figure_caption(doc: Document, label: str, text: str | None = None) -> object:
+    """Caption for a figure — CENTER-aligned (corporate review comment #4).
+
+    Renders as ``Figure N. - Description``. The label part (``Figure N.``) is
+    BOLD + italic, the description is italic (review round 2).
+    """
+    return _add_caption(doc, label, text, WD_ALIGN_PARAGRAPH.CENTER)
+
+
+def _add_caption(doc: Document, label: str, text: str | None, alignment) -> object:
+    """Shared caption renderer: bold-italic label, italic description."""
+    p = doc.add_paragraph()
+    run = p.add_run(label)
+    run.bold = True
+    run.italic = True
+    if text is not None:
+        rest = p.add_run(f" - {text}")
+        rest.italic = True
+    p.alignment = alignment
+    return p
+
+
 # ──────────────────────────────────────────────────────────────────────────────
-# List helpers
+# List helpers — REAL Word lists (numPr), not fake bullet-prefix text
 # ──────────────────────────────────────────────────────────────────────────────
+
+_NUM_FMT = {0: "bullet", 1: "decimal"}
+_NUM_TEXT = {0: "\u2022", 1: "%1."}
+
+
+def _get_numbering_part(doc: Document):
+    """Return the document's numbering part, creating it if missing.
+
+    ``NumberingPart.new()`` is not implemented in python-docx, so a part is
+    built manually via the OPC layer: a bare ``<w:numbering>`` element plus a
+    package relationship of type ``NUMBERING`` — the standard part Word and
+    Google Docs expect, only constructed by hand.
+    """
+    try:
+        return doc.part.numbering_part
+    except Exception:
+        from docx.opc.constants import CONTENT_TYPE as CT, RELATIONSHIP_TYPE as RT
+        from docx.opc.packuri import PackURI
+        from docx.parts.numbering import NumberingPart
+
+        el = OxmlElement("w:numbering")
+        part = NumberingPart(
+            PackURI("/word/numbering.xml"), CT.WML_NUMBERING, el, doc.part.package
+        )
+        doc.part.relate_to(part, RT.NUMBERING)
+        return part
+
+
+def _ensure_list_numbering(doc: Document, kind: int) -> int:
+    """Ensure a numbering definition exists for kind (0=bullet, 1=decimal).
+
+    Returns the ``w:numId`` to reference. The CD template already carries a
+    numbering part with unrelated definitions, so we only append our own
+    (tagged via ``w:tplc`` for reuse) — never touch existing ones. Schema
+    order inside ``<w:numbering>`` is ``abstractNum*`` then ``num*``, so the
+    ``abstractNum`` is inserted before the first existing ``w:num``.
+    """
+    numbering = _get_numbering_part(doc).element
+    fmt = _NUM_FMT.get(kind, "bullet")
+    tag = f"ourlist{kind:04d}"
+    for an in numbering.findall(qn("w:abstractNum")):
+        # w:tplc is set as an ATTRIBUTE on abstractNum (see below), not a child.
+        if an.get(qn("w:tplc")) == tag:
+            # By construction our w:num carries numId == abstractNumId.
+            return int(an.get(qn("w:abstractNumId")))
+    abs_id = 90
+    used_abs = {int(a.get(qn("w:abstractNumId"))) for a in numbering.findall(qn("w:abstractNum"))}
+    used_num = {int(n.get(qn("w:numId"))) for n in numbering.findall(qn("w:num"))}
+    while abs_id in used_abs or abs_id in used_num:
+        abs_id += 1
+    an = OxmlElement("w:abstractNum")
+    an.set(qn("w:abstractNumId"), str(abs_id))
+    an.set(qn("w:tplc"), tag)
+    lvl = OxmlElement("w:lvl")
+    lvl.set(qn("w:ilvl"), "0")
+    # Review round 2: without an explicit w:start Google Docs starts the
+    # decimal counter at 0. Word defaults to 1, GDocs does not — set it.
+    st = OxmlElement("w:start"); st.set(qn("w:val"), "1"); lvl.append(st)
+    nf = OxmlElement("w:numFmt"); nf.set(qn("w:val"), fmt); lvl.append(nf)
+    lt = OxmlElement("w:lvlText"); lt.set(qn("w:val"), _NUM_TEXT[kind]); lvl.append(lt)
+    ind = OxmlElement("w:ind")
+    ind.set(qn("w:left"), "720"); ind.set(qn("w:hanging"), "360")
+    lvl.append(ind)
+    an.append(lvl)
+    num = OxmlElement("w:num")
+    num.set(qn("w:numId"), str(abs_id))
+    aref = OxmlElement("w:abstractNumId"); aref.set(qn("w:val"), str(abs_id)); num.append(aref)
+    existing_nums = numbering.findall(qn("w:num"))
+    if existing_nums:
+        existing_nums[0].addprevious(an)
+    else:
+        numbering.append(an)
+    numbering.append(num)
+    return abs_id
 
 
 def _add_list_item(
@@ -214,30 +333,21 @@ def _add_list_item(
     level: int = 0,
     number: int | None = None,
 ) -> object:
-    """Add one list item, using the template's list style if it exists.
+    """Add one list item as a REAL Word list paragraph (``w:numPr``).
 
-    The corporate template ships WITHOUT list styles, so we fall back to a
-    manual indent + bullet / number prefix. This keeps the original fonts and
-    still renders a proper-looking list.
+    Corporate review comment #6: lists rendered as manual ``• ``/``1. `` text
+    prefixes do not survive the .docx → Google Doc conversion as list objects
+    — Google Docs reads them as plain paragraphs. The only reliable way to
+    produce a native list is a numbering definition (``w:abstractNum``/``w:num``
+    in numbering.xml) referenced from the paragraph via ``w:numPr``.
     """
-    candidates = (
-        ["List Bullet", "List Bullet 2", "List Bullet 3"]
-        if bullet
-        else ["List Number", "List Number 2", "List Number 3"]
-    )
+    num_id = _ensure_list_numbering(doc, 0 if bullet else 1)
     p = doc.add_paragraph()
-    applied = False
-    if level < len(candidates):
-        try:
-            p.style = doc.styles[candidates[level]]
-            applied = True
-        except Exception:
-            applied = False
-    if not applied:
-        prefix = "• " if bullet else f"{number or 1}. "
-        indent = Pt(24 * (level + 1) * (0.5 if bullet else 1))
-        p.paragraph_format.left_indent = indent
-        p.add_run(prefix)
+    pPr = p._p.get_or_add_pPr()
+    numPr = OxmlElement("w:numPr")
+    ilvl = OxmlElement("w:ilvl"); ilvl.set(qn("w:val"), "0"); numPr.append(ilvl)
+    id_el = OxmlElement("w:numId"); id_el.set(qn("w:val"), str(num_id)); numPr.append(id_el)
+    pPr.append(numPr)
     p.add_run(text)
     return p
 
@@ -296,14 +406,22 @@ def add_table(
     caption: str | None = None,
     col_widths: list[int] | None = None,
 ) -> object:
-    """Add a table with a bold header row and visible single-line borders.
+    """Add a data table with a bold header row and visible single-line borders.
+
+    Corporate data-table rules (Canyon "Verification of documents" / AL
+    Handbook):
+      * header row is bold on a subtle background fill, visually separating
+        column names from data;
+      * ALL cells are left-aligned;
+      * the header row repeats on every page the table spans (the .docx
+        equivalent of "pin the header row" for multi-page tables).
 
     Column widths are set explicitly so the table never exceeds the section's
     text area.  By default each column gets an equal share of the usable width.
     Override with ``col_widths`` (list of EMU values, one per column) if needed.
     """
     if caption:
-        add_caption(doc, "Table", caption)
+        add_table_caption(doc, "Table", caption)
 
     n_cols = len(headers)
     usable_w = _section_usable_width(doc)
@@ -338,6 +456,79 @@ def add_table(
             cell.text = str(val)
             cell.width = col_widths[j]
             _set_borders(cell)
+
+    # Corporate rules: every cell left-aligned, header repeats across pages
+    _left_align_table(tbl)
+    _repeat_header_row(tbl.rows[0])
+    return tbl
+
+
+def _left_align_table(tbl) -> None:
+    """Normalize every cell paragraph (corporate review comments #1 and #7).
+
+    * left-align all text inside tables (rule #7);
+    * strip inherited indents: cell paragraphs copy the 'Normal' style's
+      first-line indent, which renders as a redundant leading gap inside
+      every cell (rule #1). Word tables are already inset by cell margins,
+      so cell paragraphs must carry zero left/first-line indent.
+    """
+    for row in tbl.rows:
+        for cell in row.cells:
+            for p in cell.paragraphs:
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                p.paragraph_format.left_indent = Pt(0)
+                p.paragraph_format.first_line_indent = Pt(0)
+                p.paragraph_format.space_before = Pt(0)
+                p.paragraph_format.space_after = Pt(0)
+
+
+def _repeat_header_row(row) -> None:
+    """Mark the first table row to repeat on every page the table spans.
+
+    Implements the Canyon rule "закрепить шапку таблицы" for multi-page tables:
+    in Word/.docx this is the ``w:tblHeader`` row property.
+    """
+    tr_pr = row._tr.get_or_add_trPr()
+    el = OxmlElement("w:tblHeader")
+    el.set(qn("w:val"), "true")
+    tr_pr.append(el)
+
+
+def add_glossary_table(
+    doc: Document,
+    rows,
+    *,
+    col_widths: list[int] | None = None,
+) -> object:
+    """Add a corporate glossary table (Abbreviations 4.1 / Definitions 4.2).
+
+    Glossary style — deliberately distinct from data tables:
+      * NO header row: rows start directly at the data;
+      * NO borders: the section reads as a definition list, not a grid;
+      * the first column (abbreviation / defined term) is bold;
+      * all cells are left-aligned.
+
+    ``rows`` is a list of lists (or tuples); the first element of each row is
+    rendered bold. For a 2-column table the first column defaults to ~28% of
+    the usable width.
+    """
+    n_cols = len(rows[0])
+    if col_widths is None:
+        usable_w = _section_usable_width(doc)
+        if n_cols == 2:
+            col_widths = [int(usable_w * 0.28), usable_w - int(usable_w * 0.28)]
+        else:
+            col_widths = [usable_w // n_cols] * n_cols
+    tbl = doc.add_table(rows=len(rows), cols=n_cols)
+    for i, row in enumerate(rows):
+        for j, val in enumerate(row):
+            cell = tbl.cell(i, j)
+            cell.text = str(val)
+            cell.width = col_widths[j]
+            if j == 0:
+                for run in cell.paragraphs[0].runs:
+                    run.bold = True
+    _left_align_table(tbl)
     return tbl
 
 
