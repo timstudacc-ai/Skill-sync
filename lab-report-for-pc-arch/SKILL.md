@@ -85,7 +85,9 @@ Python їх не бачить.
 Якщо даних нема — запитай, не вигадуй.
 
 ### Крок 2. Написати скрипт генерації
-Створи скрипт (наприклад `report_lab1.py`), який імпортує модуль скіла:
+Створи скрипт **у поточній робочій директорії** (наприклад `./report_lab1.py`),
+НЕ у каталозі скіла чи template — папка template є лише довідковим матеріалом.
+Скрипт імпортує модуль скіла через `sys.path`:
 
 ```python
 import sys
@@ -131,6 +133,7 @@ render_pdf(r,  "/home/tim/laboratorni/звіт_робота_1_ак.pdf")
 
 ### Крок 3. Запустити і перевірити
 ```bash
+cd <робоча_директорія>
 source ~/.venvs/lab-report/bin/activate
 python report_lab1.py
 ```
@@ -170,8 +173,10 @@ render_docx(r, path) / render_pdf(r, path)
 * Фото/скріншоти збору системного блоку: білий фон, текст добре видимий.
   Якщо користувач дає лише текст без зображення — не генеруй фейковий скріншот.
 * Шлях до скіла:
-  `~/.agents/skills/lab-report-for-pc-arch/template/lab_report.py`
-  (імпорт: `sys.path.insert(0, ...)` або запуск з цієї директорії).
+  `~/.agents/skills/lab-report-for-pc-arch/template/lab_report.py`.
+  Сам скрипт генерації створюється **у поточній робочій директорії**; модуль
+  скіла імпортується через `sys.path.insert(0, ...)` — НЕ запускай із і НЕ
+  записуй файли в каталог скіла/template.
 * Тестовий приклад:
   `~/.agents/skills/lab-report-for-pc-arch/template/test_report.py`.
 

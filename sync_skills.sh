@@ -34,6 +34,14 @@
 #   --reverse      pull agent skill content into the repo (copy, not symlink)
 #   --source PATH  agent skills directory (reverse mode only; default: ~/.agents/skills)
 #
+# In default mode the script also:
+#   - runs `git pull origin main` and `git push origin main` on the repo.
+#     On a merge conflict it does nothing and logs the conflict to sync.log
+#     (created next to the repo if missing).
+#   - syncs rules: creates symlinks in ~/.agents/rules/ pointing to entries
+#     in /home/tim/Documents/Cline/Rules/ (override with $RULES_SRC and
+#     $RULES_DEST).
+#
 # Examples:
 #   sync_skills.sh                           # repo -> agent (default)
 #   sync_skills.sh --reverse                 # agent -> repo
@@ -42,7 +50,7 @@
 set -euo pipefail
 
 usage() {
-  sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 }
 
@@ -113,6 +121,106 @@ fi
 # ---- resolve the agent skills directory ------------------------------------
 AGENT_DIR="${AGENT_SOURCE:-${AGENT_SKILLS_DIR:-$HOME/.agents/skills}}"
 AGENT_DIR="$(readlink -f "$AGENT_DIR" 2>/dev/null || echo "$AGENT_DIR")"
+
+# ---- sync.log ----------------------------------------------------------------
+# Timestamped log next to the repo; created on first use.
+LOG_FILE="$REPO/sync.log"
+touch "$LOG_FILE"
+log() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') sync_skills: $*" >> "$LOG_FILE"
+}
+
+# ---- git pull/push after local sync -----------------------------------------
+# Runs after local syncing. If `git pull origin main` hits a merge conflict,
+# nothing is pushed; the conflict is recorded in sync.log and left untouched.
+git_sync() {
+  echo "Running git pull origin main (in: $REPO)"
+  if ! git -C "$REPO" pull origin main >> "$LOG_FILE" 2>&1; then
+    # Distinguish a real merge conflict from other pull failures.
+    if [[ -n "$(git -C "$REPO" diff --name-only --diff-filter=U 2>/dev/null)" ]]; then
+      log "CONFLICT: git pull origin main resulted in merge conflicts; doing nothing, no push attempted."
+      echo "  !  merge conflict during pull — nothing pushed, see $LOG_FILE" >&2
+    else
+      log "ERROR: git pull origin main failed; doing nothing, no push attempted."
+      echo "  !  git pull failed — see $LOG_FILE" >&2
+    fi
+    return 1
+  fi
+  echo "Running git push origin main (in: $REPO)"
+  if ! git -C "$REPO" push origin main >> "$LOG_FILE" 2>&1; then
+    log "ERROR: git push origin main failed."
+    echo "  !  git push failed — see $LOG_FILE" >&2
+    return 1
+  fi
+  log "OK: git pull + push origin main completed."
+  return 0
+}
+
+# ---- rules sync (repo of rules -> agent runtime) -----------------------------
+# Creates symlinks in ~/.agents/rules/ pointing to each entry (file or
+# subfolder) in RULES_SRC. Same safety rules as the skills loop: existing
+# entries are only replaced with --force.
+RULES_SRC="${RULES_SRC:-/home/tim/Documents/Cline/Rules}"
+RULES_DEST="${RULES_DEST:-$HOME/.agents/rules}"
+
+sync_rules() {
+  if [[ ! -d "$RULES_SRC" ]]; then
+    echo "sync_rules: rules source not found: '$RULES_SRC' — skipping (set \$RULES_SRC to override)" >&2
+    log "SKIP: rules source '$RULES_SRC' not found."
+    return 0
+  fi
+  mkdir -p "$RULES_DEST"
+
+  echo "Syncing rules from: $RULES_SRC"
+  echo "             into: $RULES_DEST"
+  if [[ "$DRY_RUN" == 1 ]]; then echo "(dry-run — no changes will be made)"; fi
+
+  local r_changed=0 r_skipped=0 r_failed=0
+  local entry name rsrc rdst
+  shopt -s nullglob dotglob
+  for entry in "$RULES_SRC"/*; do
+    name="$(basename "$entry")"
+    # Skip helper files that belong to the repo, not the runtime.
+    [[ "$name" == "sync.log" || "$name" == ".git" ]] && continue
+    rsrc="$(readlink -f "$entry")"
+    rdst="$RULES_DEST/$name"
+
+    if [[ -e "$rdst" || -L "$rdst" ]]; then
+      if [[ -L "$rdst" && "$(readlink "$rdst")" == "$rsrc" ]]; then
+        echo "  =  $name  (already linked)"
+        r_skipped=$((r_skipped+1))
+        continue
+      fi
+      if [[ "$FORCE" == 1 ]]; then
+        if [[ "$DRY_RUN" == 1 ]]; then
+          echo "  ~  $name  (would replace existing entry)"
+        else
+          echo "  ~  $name  replacing existing entry"
+          rm -rf "$rdst"
+          ln -s "$rsrc" "$rdst"
+        fi
+        r_changed=$((r_changed+1))
+        continue
+      fi
+      echo "  !  $name  existing entry is not a matching symlink; use --force to replace (skipped)" >&2
+      log "CONFLICT: rules entry '$name' exists at $rdst and is not a matching symlink; skipped."
+      r_failed=$((r_failed+1))
+      continue
+    fi
+
+    if [[ "$DRY_RUN" == 1 ]]; then
+      echo "  +  $name  (would create -> $rsrc)"
+    else
+      echo "  +  $name  -> $rsrc"
+      ln -s "$rsrc" "$rdst"
+    fi
+    r_changed=$((r_changed+1))
+  done
+
+  echo "----"
+  echo "rules created/updated: $r_changed | already ok: $r_skipped | conflicts skipped: $r_failed"
+}
+
 
 # ---- helper: check if agent entry is already a symlink into the repo --------
 already_in_repo() {
@@ -304,6 +412,19 @@ else
   echo "created/updated: $CHANGED | already ok: $SKIPPED | conflicts skipped: $FAILED"
   if [[ "$FAILED" -gt 0 && "$DRY_RUN" == 0 ]]; then
     echo "Re-run with --force to overwrite conflicting entries." >&2
+  fi
+
+  # Rules symlinks (source of truth: $RULES_SRC -> ~/.agents/rules)
+  echo ""
+  sync_rules
+
+  # git pull/push only after local syncing is done.
+  echo ""
+  if [[ "$DRY_RUN" == 1 ]]; then
+    echo "(dry-run — skipping git pull/push)"
+    log "DRY-RUN: git pull/push skipped."
+  else
+    git_sync || true
   fi
 fi
 
