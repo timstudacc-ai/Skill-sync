@@ -38,7 +38,7 @@ Never load raw 5000-row CSVs into the model context. Aggregate locally first:
 
 **The correct approach: open the original corporate template, then append body content only.**
 
-The bundled `template/generate_report.py` module does this. It:
+The bundled `scripts/generate_report.py` module does this (the corporate `.docx` templates it opens live in `assets/`). It:
 1. Opens the original `.docx` template — preserving the exact front page (title, Document history table, Verification table, Contents) **and** the body section's page setup (landscape/portrait, margins, page size).
 2. Strips the placeholder body from the first Heading 1 onward (or from a custom `start_marker` paragraph).
 3. Appends the report's real sections using the template's built-in styles (Heading 1, Heading 2, Normal).

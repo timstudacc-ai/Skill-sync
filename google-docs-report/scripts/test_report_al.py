@@ -13,8 +13,10 @@ from generate_report import (
 )
 
 OUT = "/tmp/AL_Report_Test.docx"
-TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "AL_Report_template.docx")
+TEMPLATE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "assets",
+    "AL_Report_template.docx")
 
 doc = new_document(TEMPLATE)
 

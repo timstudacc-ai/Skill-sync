@@ -127,14 +127,14 @@ and name, faculty, department, year). Ask when data is missing — never invent.
 
 ### Step 2. Write the generation script
 Create the script **in the current working directory** (e.g. `./report_lab3.py`),
-NOT inside the skill's or template's directory — the template folder is
+NOT inside the skill's directory — the skill's `scripts/` folder is
 read-only reference material, user files live in the workspace. Import the
 skill's module via `sys.path`:
 
 ```python
 import os, sys
 sys.path.insert(0, os.path.expanduser(
-    "~/.agents/skills/lab-report/template"))
+    "~/.agents/skills/lab-report/scripts"))
 from lab_report import (
     Report, add_paragraph, add_code, add_figure, add_formula, add_table,
     render_docx, render_pdf,
@@ -333,11 +333,11 @@ sets per report (real example from this skill's history):
   unreadable in print and violate the guide's examples. If generating
   programmatically, prefer draw.io XML (user edits/exports) or a high-DPI
   PIL render, then visually inspect the PNG before embedding.
-* Skill path: `~/.agents/skills/lab-report/template/lab_report.py`.
+* Skill path: `~/.agents/skills/lab-report/scripts/lab_report.py`.
   The generation script itself is created in the **current working
-  directory**; import the template module via `sys.path.insert(0, ...)` —
-  do NOT run from, or write files into, the skill/template directory.
-* Test example: `~/.agents/skills/lab-report/template/test_report.py`.
+  directory**; import the module via `sys.path.insert(0, ...)` —
+  do NOT run from, or write files into, the skill directory.
+* Test example: `~/.agents/skills/lab-report/scripts/test_report.py`.
   Activate the venv before any run (run the script from the working directory):
   ```bash
   cd <working_directory>

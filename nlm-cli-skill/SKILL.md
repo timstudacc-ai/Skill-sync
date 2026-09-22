@@ -28,104 +28,85 @@ Route to the correct profile and discover notebooks dynamically — never hardco
   {
     "id": "66cc5fb6-7224-49ad-972e-4448c0da038d",
     "title": "Introductory Physics Practicum with Anna Valeriivna",
-    "source_count": 4,
-    "updated_at": "2026-09-13T04:26:41Z"
   },
   {
     "id": "8b24d2c5-7db1-4ec3-98e8-6d2ac4bc4def",
     "title": "Embedded linux development",
-    "source_count": 10,
-    "updated_at": "2026-09-13T02:50:38Z"
+  
   },
   {
     "id": "3eb949cd-eee4-4d39-b58d-b056aaffa6de",
     "title": "STM32_MQTT_meteostation_project",
-    "source_count": 17,
-    "updated_at": "2026-09-11T12:41:36Z"
+
   },
   {
     "id": "0c6aaeeb-b72f-4198-b133-0b90534e88e7",
     "title": "Proggraming University",
-    "source_count": 3,
-    "updated_at": "2026-09-10T05:44:48Z"
   },
   {
     "id": "4d3be3eb-621d-43f7-9434-5cd1a41b1343",
     "title": "STM32",
-    "source_count": 11,
-    "updated_at": "2026-09-09T12:26:31Z"
+   
   },
   {
     "id": "8c3bf5c4-ac2f-4da8-b3cb-30436527b0a0",
     "title": "Computer Architecture University",
-    "source_count": 1,
-    "updated_at": "2026-09-05T09:32:31Z"
+
   },
   {
     "id": "bc4c6332-3689-4672-9238-851d2dd06291",
     "title": "ESP32",
-    "source_count": 80,
-    "updated_at": "2026-09-05T04:23:31Z"
+  
   },
   {
     "id": "fde61edc-2cba-4acd-9317-bb0c00c2feda",
     "title": "ESP-IDF Programming Guide for ESP32 v5.3",
-    "source_count": 3,
-    "updated_at": "2026-09-05T04:23:27Z"
+   
   },
   {
     "id": "aed381ff-5805-49a1-9871-7128d0867a42",
     "title": "The PySerial Interface Design",
-    "source_count": 3,
-    "updated_at": "2026-09-05T04:16:26Z"
+    
   },
   {
     "id": "0e5d5048-ee0a-4140-8837-f6cf85963952",
     "title": "Organizational Meeting for New Students and Bank Partners",
-    "source_count": 1,
-    "updated_at": "2026-09-04T06:44:32Z"
+  
   },
   {
     "id": "16314b9f-2098-4519-8517-3951a9aaf331",
     "title": "Nrf + zephyr docs (Human readable) ",
-    "source_count": 32,
-    "updated_at": "2026-09-03T11:07:26Z"
+
   },
   {
     "id": "8178ecf4-351c-4236-848d-c925d2553797",
     "title": "ICM45686 Zephyr Driver",
-    "source_count": 12,
-    "updated_at": "2026-09-03T11:06:39Z"
+  
   },
   {
     "id": "03b269fb-08ad-4ef1-aab7-0bca0231d386",
     "title": "Cline Complete Documentation and Implementation Guide",
-    "source_count": 1,
-    "updated_at": "2026-09-03T10:57:35Z"
+  
   },
   {
     "id": "45812ea8-0600-4816-b97f-4fe39d61fa9f",
     "title": "Copy of Nrf + zephyr docs (Agent readable)",
-    "source_count": 27,
-    "updated_at": "2026-09-03T10:56:53Z"
+
   },
   {
     "id": "bbab5720-a687-46a0-93b2-f2de01a4975d",
     "title": "Siglent SDS800X HD Series Digital Oscilloscope User Manual",
-    "source_count": 1,
-    "updated_at": "2026-09-02T11:30:17Z"
+   
   },
   {
     "id": "a1dc0bb4-4005-4dbf-b8d3-188a4cfd9b05",
     "title": "Xbox BLE HID",
-    "source_count": 7,
-    "updated_at": "2026-08-23T11:42:59Z"
+   
   },
   {
     "id": "2f80b340-4046-4b11-bbc7-c48c97ceae25",
     "title": "Hardware Nrf refference",
-    "source_count": 4,
-    "updated_at": "2026-08-20T09:30:08Z"
+   
   }
 ]
 ---

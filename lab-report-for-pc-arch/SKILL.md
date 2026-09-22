@@ -86,13 +86,13 @@ Python їх не бачить.
 
 ### Крок 2. Написати скрипт генерації
 Створи скрипт **у поточній робочій директорії** (наприклад `./report_lab1.py`),
-НЕ у каталозі скіла чи template — папка template є лише довідковим матеріалом.
+НЕ у каталозі скіла чи scripts — папка scripts є лише довідковим матеріалом.
 Скрипт імпортує модуль скіла через `sys.path`:
 
 ```python
-import sys
-sys.path.insert(0,
-    "/home/tim/.agents/skills/lab-report-for-pc-arch/template")
+import os, sys
+sys.path.insert(0, os.path.expanduser(
+    "~/.agents/skills/lab-report-for-pc-arch/scripts"))
 from lab_report import (
     Report, add_paragraph, add_code, add_figure, add_formula, add_table,
     render_docx, render_pdf,
@@ -173,11 +173,11 @@ render_docx(r, path) / render_pdf(r, path)
 * Фото/скріншоти збору системного блоку: білий фон, текст добре видимий.
   Якщо користувач дає лише текст без зображення — не генеруй фейковий скріншот.
 * Шлях до скіла:
-  `~/.agents/skills/lab-report-for-pc-arch/template/lab_report.py`.
+  `~/.agents/skills/lab-report-for-pc-arch/scripts/lab_report.py`.
   Сам скрипт генерації створюється **у поточній робочій директорії**; модуль
   скіла імпортується через `sys.path.insert(0, ...)` — НЕ запускай із і НЕ
-  записуй файли в каталог скіла/template.
+  записуй файли в каталог скіла/scripts.
 * Тестовий приклад:
-  `~/.agents/skills/lab-report-for-pc-arch/template/test_report.py`.
+  `~/.agents/skills/lab-report-for-pc-arch/scripts/test_report.py`.
 
 

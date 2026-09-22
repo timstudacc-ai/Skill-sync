@@ -107,6 +107,18 @@ Restart Cline. All skills should now appear in the **Skills menu** (scale icon a
 
 Each skill must be a directory containing a `SKILL.md` file with YAML frontmatter:
 
+**Bundled resources** are optional, but when present they must use the standard folder names:
+
+| Folder | Purpose |
+|---|---|
+| `scripts/` | Executable logic (Python, JS, Bash) that the skill runs |
+| `assets/` | Static files used *in the output* (`.docx`/`.html` templates, icons, fonts) |
+| `references/` | Documentation the agent reads on demand |
+| `evals/` | Eval-case definitions (`evals/evals.json`) — part of the skill-creator eval schema, which is why its packager excludes this name |
+| `agents/` | Subagent instruction files (skill-creator only) |
+
+Names such as `template/`, `eval-viewer/`, or misspelled folders do **not** match this convention: bundled code belongs in `scripts/`, bundled output templates in `assets/`.
+
 ```
 ~/.agents/skills/
 ├── memory-bank/
@@ -126,11 +138,10 @@ Each skill must be a directory containing a `SKILL.md` file with YAML frontmatte
 ├── skill-creator/
 │   ├── SKILL.md
 │   ├── LICENSE.txt
-│   ├── agents/
-│   ├── assets/
-│   ├── eval-viewer/
-│   ├── references/
-│   └── scripts/
+│   ├── agents/        (subagent instructions, read on demand)
+│   ├── assets/        (output templates, e.g. viewer.html)
+│   ├── references/    (docs read on demand, e.g. schemas.md)
+│   └── scripts/       (executable code)
 └── socrat/
     └── SKILL.md
 ```

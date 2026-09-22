@@ -70,13 +70,16 @@ def new_document(template_path: str | None = None, *, start_marker: str | None =
     """
     if template_path is None:
         template_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
+            # scripts/ and assets/ are siblings inside the skill directory
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "assets",
             "CD_Report_template.docx",
         )
     if not os.path.exists(template_path):
         raise FileNotFoundError(
             f"template not found: {template_path}\n"
-            "Expected the original CD_Report_(Horiz) .docx alongside this module."
+            "Expected the original CD_Report_(Horiz) .docx in the skill's assets/ "
+            "directory (sibling of scripts/)."
         )
     doc = Document(template_path)
     _strip_body(doc, start_marker=start_marker)

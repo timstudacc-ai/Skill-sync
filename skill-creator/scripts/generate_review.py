@@ -254,7 +254,9 @@ def generate_html(
     benchmark: dict | None = None,
 ) -> str:
     """Generate the complete standalone HTML page with embedded data."""
-    template_path = Path(__file__).parent / "viewer.html"
+    # viewer.html is a static output template, so it lives in the skill's
+    # assets/ directory (a sibling of this scripts/ directory).
+    template_path = Path(__file__).parent.parent / "assets" / "viewer.html"
     template = template_path.read_text()
 
     # Build previous_feedback and previous_outputs maps for the template
