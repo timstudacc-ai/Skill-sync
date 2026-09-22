@@ -1,177 +1,84 @@
 ---
 name: nlm-cli-skill
-description: Brief description of what this skill does
+description: Query the user's personal NotebookLM knowledge base through the nlm CLI via the nlmq wrapper. Use whenever the user asks to "ask my notebook", "query NotebookLM", "check my notes", or wants an answer grounded in their own material - Zephyr/nRF, ESP32/ESP-IDF, STM32, embedded Linux, computer architecture, physics labs, PySerial, oscilloscope manuals, Cline docs, or any notebook in their NotebookLM account. Retrieves an answer, synthesizes it with conversation context, then pauses for clarification. Does NOT manage sources and does NOT generate artifacts.
 ---
 
 # NotebookLM Retrieval & Synthesis Protocol
 
-A pure retrieval pipeline. Query NotebookLM via the nlm **CLI**, combine retrieved content with conversation context, then pause for clarification. Does NOT manage sources, does NOT generate execution plans.
+Pure retrieval pipeline: route to the right notebook -> query it -> synthesize the answer with conversation context -> pause for clarification. Does NOT manage sources, does NOT generate execution plans.
 
----
+## RULE Q1 - hard gate
 
-## Phase 1: Profile Routing & Notebook Discovery
+- **Every** NotebookLM interaction goes through `nlmq`.
+- If a command in your plan starts with bare `nlm `, that command is **invalid** - replace it with the `nlmq` equivalent before running.
+- The only permitted direct `nlm` invocations are `nlm login --check` (auth diagnosis, see exit code 2) and `nlm login` itself (only if the check fails and the user agrees).
+- Never run `nlm login switch` - it mutates global state for every other consumer of the CLI. Per-call profiles: `nlmq --profile <name>`.
+- NEVER run `nlm chat start` - it opens an interactive REPL no agent can control. `nlmq` is synchronous by construction; backgrounding a query with `&` is forbidden.
 
-Route to the correct profile and discover notebooks dynamically — never hardcode notebook IDs.
+## Phase 0 - Preconditions
 
-* **`work` profile:** Embedded engineering, firmware (STM32, ESP32, nRF54), datasheets, RTOS.
-* **`personal` profile:** Non-embedded research, prompting, personal projects, general notes.
+1. `command -v nlmq` must succeed. If it does not, tell the user the `nlmq` shim is missing (it should run `scripts/nlmq.py` in this skill), use the Fallback at the bottom **once**, then stop.
+2. No other setup. Notebook IDs are **never** hardcoded, copied from documents, or guessed - `nlmq` resolves them live.
 
-1. Determine domain (embedded/work vs. general/personal).
-2. Switch profile if needed: `nlm login switch work` or `nlm login switch personal`.
-3. Discover notebooks: nlm notebook list --json, then based on user request and conversation topic select appropriate notebook. 
-### Notebook Taxonomy
-- `"<Project Name>"` — memory bank (Drive sources, auto-synced)
-- `"<Topic> docs (for Agent)"` — documentation for AI queries
-- `"<Topic> docs (Human readable)"` — documentation for human reading
-### Current ative notebook id's
-[
-  {
-    "id": "66cc5fb6-7224-49ad-972e-4448c0da038d",
-    "title": "Introductory Physics Practicum with Anna Valeriivna",
-  },
-  {
-    "id": "8b24d2c5-7db1-4ec3-98e8-6d2ac4bc4def",
-    "title": "Embedded linux development",
-  
-  },
-  {
-    "id": "3eb949cd-eee4-4d39-b58d-b056aaffa6de",
-    "title": "STM32_MQTT_meteostation_project",
+## Phase 1 - Route to a notebook
 
-  },
-  {
-    "id": "0c6aaeeb-b72f-4198-b133-0b90534e88e7",
-    "title": "Proggraming University",
-  },
-  {
-    "id": "4d3be3eb-621d-43f7-9434-5cd1a41b1343",
-    "title": "STM32",
-   
-  },
-  {
-    "id": "8c3bf5c4-ac2f-4da8-b3cb-30436527b0a0",
-    "title": "Computer Architecture University",
+Pass **domain keywords** as the topic; `nlmq` resolves keyword -> alias -> live notebook ID (order: alias name, routing keyword, exact title, keyword token, title substring):
 
-  },
-  {
-    "id": "bc4c6332-3689-4672-9238-851d2dd06291",
-    "title": "ESP32",
-  
-  },
-  {
-    "id": "fde61edc-2cba-4acd-9317-bb0c00c2feda",
-    "title": "ESP-IDF Programming Guide for ESP32 v5.3",
-   
-  },
-  {
-    "id": "aed381ff-5805-49a1-9871-7128d0867a42",
-    "title": "The PySerial Interface Design",
-    
-  },
-  {
-    "id": "0e5d5048-ee0a-4140-8837-f6cf85963952",
-    "title": "Organizational Meeting for New Students and Bank Partners",
-  
-  },
-  {
-    "id": "16314b9f-2098-4519-8517-3951a9aaf331",
-    "title": "Nrf + zephyr docs (Human readable) ",
+    nlmq --discover <topic>     # dry run: shows what would be queried, spends no API call
 
-  },
-  {
-    "id": "8178ecf4-351c-4236-848d-c925d2553797",
-    "title": "ICM45686 Zephyr Driver",
-  
-  },
-  {
-    "id": "03b269fb-08ad-4ef1-aab7-0bca0231d386",
-    "title": "Cline Complete Documentation and Implementation Guide",
-  
-  },
-  {
-    "id": "45812ea8-0600-4816-b97f-4fe39d61fa9f",
-    "title": "Copy of Nrf + zephyr docs (Agent readable)",
+- rc=4 (zero or several matches): run `nlmq --list`, then **ask the user** which notebook. Never guess between candidates.
+- `nlmq --list` also shows alias coverage and dangling aliases.
 
-  },
-  {
-    "id": "bbab5720-a687-46a0-93b2-f2de01a4975d",
-    "title": "Siglent SDS800X HD Series Digital Oscilloscope User Manual",
-   
-  },
-  {
-    "id": "a1dc0bb4-4005-4dbf-b8d3-188a4cfd9b05",
-    "title": "Xbox BLE HID",
-   
-  },
-  {
-    "id": "2f80b340-4046-4b11-bbc7-c48c97ceae25",
-    "title": "Hardware Nrf refference",
-   
-  }
-]
----
+## Phase 2 - Query
 
-## Phase 2: Query NotebookLM
+    nlmq <topic> "<detailed question>"
 
-Formulate a **detailed, architecturally descriptive question** and query the matched notebook:
+**Question formulation rules:**
 
-**Query formulation rules:**
-- Describe the full architecture in detail — state machine structure, RTOS primitives used, thread model, message passing, concurrency controls, and the specific problem you're solving.
-- Do NOT ask brief or vague questions. Include module names, data structures, thread contexts, and the exact anti-pattern.
-- If the codebase has a known flaw, describe it.
-- The goal is to give NLM enough architectural context to provide specific, informed guidance — not generic advice.
-- Do NOT interact with sources directly  — the user manages sources himself.
-- When encountered an error, reffer nlm-cli-ai-ref skill for troubleshooting.
-- NEVER run asynchronious query, "&" at the end of the command s forbiden, each querry should be syncronyous and you should wait until the answer arrives nlm notebook query <notebook_id> "<question>" --json --timeout 180 2>/dev/null | jq -r '.answer' > /tmp/nlm5.txt 2>&1; wc -c /tmp/nlm5.txt; cat /tmp/nlm5.txt
+- Describe the full architecture - state machine structure, RTOS primitives used, thread model, message passing, concurrency controls, data structures, and the exact anti-pattern. Never ask brief or vague questions.
+- Include module names, the threads/ISRs involved, and the specific problem. If the codebase has a known flaw, describe it.
+- The call is synchronous and blocking; wait for it to finish. Do not run queries in parallel.
+- Do NOT interact with sources (add/remove/sync) - the user manages sources himself.
 
+stdout of `nlmq` is the answer text - that is the retrieved material. stderr is provenance (which notebook answered); do not mix it into the answer.
 
-### If encountered an error, refference /refference/nlm_user_guide.md 
-
-## Phase 3: Synthesize — NLM + Conversation Context
+## Phase 3 - Synthesize
 
 Combine two streams into one unified response:
 
-1. **What NLM returned** — the retrieved answer with citations.
-2. **What you already know from the conversation** — the user's stated goal, previous clarifications, project context, constraints.
+1. **What NLM returned** - the retrieved answer.
+2. **What you already know from the conversation** - the user's goal, constraints, prior clarifications.
 
-Weave them together. Do not paste NLM output verbatim; do not ignore the conversation context. The value is the synthesis of both, not either alone.
+Weave them together. Do not paste NLM output verbatim; do not ignore the conversation context - the value is the synthesis of both. Bracketed numbers like `[1-5]` inside the answer are unresolvable reference markers in this pipeline: **never expand, explain, or invent what they point to.** NLM handles its own knowledge boundaries - if it does not know, it says so.
 
-NLM handles its own knowledge boundaries — if it doesn't know, it says so. No need to double-guess it.
-
----
-
-## Phase 4: Clarification
-
-After presenting the synthesized response:
+## Phase 4 - Clarification
 
 1. Identify what remains ambiguous or partial despite NLM + context.
-2. Draft 1–3 clarifying questions for the user.
+2. Draft 1-3 clarifying questions for the user.
 3. **STOP.** Wait for answers before proceeding.
----
 
+## Exit codes -> your action
 
+| rc | Meaning | Action |
+|----|---------|--------|
+| 0 | Answer on stdout | use it |
+| 1 | Bad invocation / local config (e.g. routing.json missing) | fix the command; if config is broken, tell the user |
+| 2 | nlm/auth/network failure, or the resolved notebook vanished | run `nlm login --check`; report honestly; if "no longer exists", suggest `nlmq --sync-aliases --apply` |
+| 3 | rc=0 but malformed/empty answer | retry **once**; then report as a tool failure - do not fabricate an answer |
+| 4 | Topic resolved to zero or several notebooks | `nlmq --discover` / `nlmq --list`, then ask the user |
+| 5 | Profile name not found | check spelling; ask the user which profile |
 
-## Tips for AI Assistants
+## Safety rules (always apply)
 
-1. **Always run `nlm login` first** if any auth error occurs
-2. **Use `--confirm` for all generation/delete commands** to avoid blocking prompts
-3. **Capture IDs from create outputs** - you'll need them for subsequent operations
-4. **Use aliases** for frequently-used notebooks to simplify commands
-5. **Poll for long operations** - audio/video takes 1-5 minutes; use `nlm studio status` or `nlm status artifacts`
-6. **Research needs a destination** - use `--notebook-id` for an existing notebook or `--title` to create one
-7. **Re-authenticate only for stale/missing credentials** - `unverified` means the probe was inconclusive
-8. **Use `--max-wait 0`** for single status poll instead of blocking
-9. **⚠️ ALWAYS ask user before delete** - Before running ANY delete command, ask the user for explicit confirmation.Deletions are IRREVERSIBLE. Show what will be deleted and warn about permanent data loss.
-10. **Check aliases before creating** - Run `nlm alias list` or `nlm list aliases` before creating a new alias to avoid conflicts with existing names.
-11. **DO NOT launch REPL** - Never use `nlm chat start` - it opens an interactive REPL that AI tools cannot control. Use `nlm notebook query` or `nlm query notebook` for one-shot Q&A instead.
-12. **Choose output format wisely** - Default output (no flags) is compact and token-efficient—use it for status checks. Use `--quiet` to capture IDs for piping. Only use `--json` when you need to parse specific fields programmatically.
-13. **Verb-first vs Noun-first** - Both command styles work identically. Use whichever is more natural for the context. Noun-first groups by resource (notebook, source), verb-first groups by action (create, list, delete).
-14. **Download workflow** - Always wait for artifact completion before downloading. Check status with `nlm studio status <notebook>`, get the artifact ID, then download with `nlm download <type> <notebook> <artifact-id>`.
-15. **Artifact generation takes time** - Audio/video: 1-5 minutes. Reports/quizzes: 30-60 seconds. Always poll status before attempting download.
-16. **Download output files** - If no `--output` specified, files are saved with default names (e.g., `audio_<id>.mp3`, `video_<id>.mp4`, `report_<id>.txt`). Use `--output` to specify custom filenames.
-17. **Streaming downloads** - All downloads use efficient streaming to handle large files without memory issues. This is automatic.
-18. **Drive source sync** - Use `nlm source stale <notebook>` or `nlm list stale-sources <notebook>` to check whichDrive sources need syncing before running sync commands.
-19. **Use --wait for blocking source adds** - When adding sources before querying, use `nlm source add ... --wait` to block until processing completes. This ensures the source is ready for queries.
-20. **Export to Google Docs/Sheets** - Reports can be exported to Google Docs, Data Tables to Google Sheets. Use `nlm export to-docs/to-sheets <notebook> <artifact-id>`.
-21. **Batch with tags** - Tag notebooks first (`nlm tag add ... --tags "topic"`), then use `--tags` flag with batchcommands for targeted multi-notebook operations.
-22. **Pipelines for automation** - Use `nlm pipeline list` to see available workflows, then `nlm pipeline run` for automated multi-step operations (ingest → generate).
+1. **Ask the user before ANY delete.** Deletions are irreversible; show what will be deleted and warn about permanent data loss.
+2. Re-authenticate only for stale/missing credentials - `unverified` means the probe was inconclusive; check connectivity first.
+
+## Deep troubleshooting
+
+Only after the exit-code table and `nlm login --check` fail to resolve a problem: `reference/nlm_user_guide.md` (CLI internals, auth layers, error catalog).
+
+## Fallback (only while `nlmq` is missing)
+
+Use **once** to unblock, then tell the user to restore the shim (`~/.local/bin/nlmq` -> `scripts/nlmq.py` in this skill). This form cannot resolve topics - take the UUID from `nlm notebook list --json`. `jq -e` is mandatory: bare `jq -r '.answer'` prints the string `null` and exits 0 on API errors, which silently fakes a successful answer.
+
+    nlm notebook query <uuid> "<question>" --json --timeout 180 | jq -er '.answer | select(length > 0)'

@@ -55,21 +55,69 @@ From github.com:timstudacc-ai/Skill-sync
 Already up to date.
 Everything up-to-date
 2026-09-13 10:03:07 sync_skills: OK: git pull + push origin main completed.
-2026-09-14 14:05:47 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+   3848b0e..41c7fea  main       -> origin/main
+Updating 3848b0e..41c7fea
+Fast-forward
+ .../__pycache__/generate_report.cpython-312.pyc    | Bin 27009 -> 27009 bytes
+ html-docs-to-txt/SKILL.md                          | 112 +++++++
+ html-docs-to-txt/evals/evals.json                  |  40 +++
+ html-docs-to-txt/scripts/html_docs_to_txt.py       | 360 +++++++++++++++++++++
+ .../scripts/__pycache__/__init__.cpython-312.pyc   | Bin 0 -> 158 bytes
+ .../__pycache__/package_skill.cpython-312.pyc      | Bin 0 -> 5611 bytes
+ .../__pycache__/quick_validate.cpython-312.pyc     | Bin 0 -> 4410 bytes
+ 7 files changed, 512 insertions(+)
+ create mode 100644 html-docs-to-txt/SKILL.md
+ create mode 100644 html-docs-to-txt/evals/evals.json
+ create mode 100644 html-docs-to-txt/scripts/html_docs_to_txt.py
+ create mode 100644 skill-creator/scripts/__pycache__/__init__.cpython-312.pyc
+ create mode 100644 skill-creator/scripts/__pycache__/package_skill.cpython-312.pyc
+ create mode 100644 skill-creator/scripts/__pycache__/quick_validate.cpython-312.pyc
+Everything up-to-date
+2026-09-15 05:35:40 sync_skills: OK: git pull + push origin main completed.
 From github.com:timstudacc-ai/Skill-sync
  * branch            main       -> FETCH_HEAD
 Already up to date.
 Everything up-to-date
-2026-09-14 14:05:50 sync_skills: OK: git pull + push origin main completed.
-2026-09-21 08:47:38 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
+2026-09-16 05:58:09 sync_skills: OK: git pull + push origin main completed.
 From github.com:timstudacc-ai/Skill-sync
  * branch            main       -> FETCH_HEAD
 Already up to date.
 Everything up-to-date
-2026-09-21 08:47:41 sync_skills: OK: git pull + push origin main completed.
-2026-09-21 08:47:43 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
+2026-09-16 09:33:41 sync_skills: OK: git pull + push origin main completed.
 From github.com:timstudacc-ai/Skill-sync
  * branch            main       -> FETCH_HEAD
 Already up to date.
 Everything up-to-date
-2026-09-21 08:47:46 sync_skills: OK: git pull + push origin main completed.
+2026-09-18 05:30:07 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-19 05:30:06 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-20 09:56:16 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-20 09:56:21 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-21 05:30:07 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-21 05:47:53 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-22 05:30:05 sync_skills: OK: git pull + push origin main completed.
