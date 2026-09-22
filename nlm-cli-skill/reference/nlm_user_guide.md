@@ -67,8 +67,7 @@ existing names.
 10. **DO NOT launch REPL**: Never use `nlm chat start` - it opens an interactive REPL that AI tools cannot control. 
 Use `nlm notebook query` for one-shot Q&A instead.
 11. **Choose output format wisely**: Default output (no flags) is compact and token-efficient—use it for status 
-checks. Use `--quiet` to capture IDs for piping. Only use `--json` when you need to parse specific fields 
-programmatically.
+checks. Use `--quiet` to capture IDs for piping. Any agent or script invocation MUST request machine-readable output: pass `--json` (or export `NLM_OUTPUT_FORMAT=json`) and validate the parsed fields - never eyeball human-formatted tables.
 12. **Use `--help` when unsure**: Run `nlm <command> --help` to see available options and flags for any command.
 13. **Studio: fast track by default**: Infer format/style/prompt silently—one compact line, then 
 `studio_create(confirm=True)`. No intake questionnaires. Fast track reduces clarifying questions, not the confirm 
