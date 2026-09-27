@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>claude usage</title>
+<title>agent usage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* anthropic / claude-code palette */
+    /* warm terminal palette */
     --ivory: #FAF9F5;
     --term-bg: #1a1918;
     --term-fg: #d1cfc5;
@@ -226,11 +226,11 @@
 <div class="term">
   <div class="titlebar">
     <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-    <span class="path" id="title-path">~/.claude — session-report</span>
+    <span class="path" id="title-path">session-report — agent usage</span>
   </div>
   <div class="term-body">
 
-    <div class="cmd"><span class="prompt">&gt;</span> claude usage <span id="cmd-flags"></span></div>
+    <div class="cmd"><span class="prompt">&gt;</span> session usage <span id="cmd-flags"></span></div>
     <div id="meta-line">loading…</div>
 
     <div id="hero">
@@ -374,14 +374,17 @@
     `<b>${fmt(o.output_tokens)}</b> output · all figures below are % of this total`;
 
   // overall stat grid
-  $('overall-grid').innerHTML = [
+  const grid = [
     ['sessions', o.sessions],
     ['api calls', o.api_calls],
     ['human msgs', o.human_messages],
     ['active hours', o.hours.active, `${o.hours.wall_clock} wall-clock`],
     ['cache breaks', o.cache_breaks_over_100k, '>100k uncached'],
     ['subagent calls', o.subagent.calls, `avg ${fmt(o.subagent.avg_tokens_per_call)}`],
-  ].map(([l,v,d]) =>
+  ];
+  if (o.cost_usd != null && o.cost_usd > 0)
+    grid.push(['cost', '$' + o.cost_usd.toFixed(2), 'in range']);
+  $('overall-grid').innerHTML = grid.map(([l,v,d]) =>
     `<div class="stat"><div class="label">${l}</div>`+
     `<div class="val">${typeof v==='number'&&v>=1e4?fmt(v):v}</div>`+
     (d?`<div class="detail">${d}</div>`:'')+`</div>`).join('');

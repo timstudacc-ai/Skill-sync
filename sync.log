@@ -121,3 +121,94 @@ From github.com:timstudacc-ai/Skill-sync
 Already up to date.
 Everything up-to-date
 2026-09-22 05:30:05 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+To github.com:timstudacc-ai/Skill-sync.git
+   41c7fea..cc80f35  main -> main
+2026-09-22 07:44:03 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+   cc80f35..c3b365c  main       -> origin/main
+Updating cc80f35..c3b365c
+Fast-forward
+ .gitignore                                         |   3 +
+ SETUP_GUIDE.md                                     |  21 +-
+ google-docs-report/SKILL.md                        |   2 +-
+ .../{template => assets}/AL_Report_template.docx   | Bin
+ .../{template => assets}/CD_Report_template.docx   | Bin
+ .../{template => scripts}/generate_report.py       |   7 +-
+ .../{template => scripts}/test_report.py           |   0
+ .../{template => scripts}/test_report_al.py        |   6 +-
+ .../__pycache__/generate_report.cpython-312.pyc    | Bin 27009 -> 0 bytes
+ .../__pycache__/generate_report.cpython-314.pyc    | Bin 18710 -> 0 bytes
+ lab-report-for-pc-arch/SKILL.md                    |  14 +-
+ .../{template => scripts}/lab_report.py            |   2 +-
+ .../{template => scripts}/test_report.py           |   0
+ .../__pycache__/lab_report.cpython-314.pyc         | Bin 19229 -> 0 bytes
+ lab-report/SKILL.md                                |  12 +-
+ lab-report/{template => scripts}/lab_report.py     |   2 +-
+ lab-report/{template => scripts}/test_report.py    |   0
+ .../__pycache__/lab_report.cpython-314.pyc         | Bin 19345 -> 0 bytes
+ nlm-cli-skill/references/nlm_user_guide.md         | 985 +++++++++++++++++++++
+ skill-creator/SKILL.md                             |   8 +-
+ skill-creator/{eval-viewer => assets}/viewer.html  |   0
+ .../scripts/__pycache__/__init__.cpython-312.pyc   | Bin 158 -> 0 bytes
+ .../__pycache__/package_skill.cpython-312.pyc      | Bin 5611 -> 0 bytes
+ .../__pycache__/quick_validate.cpython-312.pyc     | Bin 4410 -> 0 bytes
+ .../{eval-viewer => scripts}/generate_review.py    |   4 +-
+ 25 files changed, 1036 insertions(+), 30 deletions(-)
+ create mode 100644 .gitignore
+ rename google-docs-report/{template => assets}/AL_Report_template.docx (100%)
+ rename google-docs-report/{template => assets}/CD_Report_template.docx (100%)
+ rename google-docs-report/{template => scripts}/generate_report.py (98%)
+ rename google-docs-report/{template => scripts}/test_report.py (100%)
+ rename google-docs-report/{template => scripts}/test_report_al.py (97%)
+ delete mode 100644 google-docs-report/template/__pycache__/generate_report.cpython-312.pyc
+ delete mode 100644 google-docs-report/template/__pycache__/generate_report.cpython-314.pyc
+ rename lab-report-for-pc-arch/{template => scripts}/lab_report.py (99%)
+ rename lab-report-for-pc-arch/{template => scripts}/test_report.py (100%)
+ delete mode 100644 lab-report-for-pc-arch/template/__pycache__/lab_report.cpython-314.pyc
+ rename lab-report/{template => scripts}/lab_report.py (99%)
+ rename lab-report/{template => scripts}/test_report.py (100%)
+ delete mode 100644 lab-report/template/__pycache__/lab_report.cpython-314.pyc
+ create mode 100644 nlm-cli-skill/references/nlm_user_guide.md
+ rename skill-creator/{eval-viewer => assets}/viewer.html (100%)
+ delete mode 100644 skill-creator/scripts/__pycache__/__init__.cpython-312.pyc
+ delete mode 100644 skill-creator/scripts/__pycache__/package_skill.cpython-312.pyc
+ delete mode 100644 skill-creator/scripts/__pycache__/quick_validate.cpython-312.pyc
+ rename skill-creator/{eval-viewer => scripts}/generate_review.py (98%)
+Everything up-to-date
+2026-09-23 05:30:09 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-24 05:30:05 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-25 05:30:07 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+   c3b365c..6266fb5  main       -> origin/main
+Updating c3b365c..6266fb5
+Fast-forward
+ code-style-embedded/SKILL.md | 126 +++++++++++++++++++++++++++++++++++
+ pr-review-rtos/SKILL.md      | 152 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 278 insertions(+)
+ create mode 100644 code-style-embedded/SKILL.md
+ create mode 100644 pr-review-rtos/SKILL.md
+Everything up-to-date
+2026-09-26 05:30:06 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-26 12:42:40 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-27 17:43:47 sync_skills: OK: git pull + push origin main completed.

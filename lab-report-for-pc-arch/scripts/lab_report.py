@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """
 Шаблонний модуль скіла lab-report-for-pc-arch («Архітектура комп'ютера»).
-Титульний аркуш за зразком «Титульний лист лабораторних робіт.docx»:
-  шапка — лише «Міністерство науки і освіти України» (центр, жирний), БЕЗ
-  університету/факультету/кафедри; назва роботи та дисципліна жирним по
-  центру; тема ВЕРХНІМ регістром; блок виконавця з відступом 11.25 см
-  праворуч; «м. Дніпро» / «2020 рік» внизу по центру.
+Титульний аркуш за зразком звіту №1 дисципліни (та «Титульний лист
+лабораторних робіт.docx»):
+  шапка — «МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ» (центр, жирний), БЕЗ
+  університету/факультету/кафедри, одразу під нею — логотип НТУ
+  «Дніпровська політехніка» (assets/logo_ntu.png, 8 см по центру);
+  назва роботи жирним по центру; дисципліна в лапках; тема ВЕРХНІМ
+  регістром; блок виконавця з відступом 11.25 см праворуч; «м. Дніпро» /
+  «2020 рік» внизу по центру.
 Основний текст — за правилами НТУ «Дніпровська політехніка» (A4, TNR 14,
 інтервал 1.5, відступ 1.25 см, по ширині, код — моно 10, рисунки — центр).
 
@@ -35,13 +38,22 @@ FALLBACK_SERIF = "Liberation Serif"     # метричний аналог TNR д
 MONO_FONT = "DejaVu Sans Mono"
 FIG_CAPTION = "Рисунок {} – {}"
 
+# Логотип НТУ «Дніпровська політехніка» на титульному аркуші (як у звіті №1).
+# Лежить поруч із модулем: assets/logo_ntu.png (можна перекрити параметром
+# Report(logo="…") або передати logo="" щоб вимкнути).
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+LOGO_PATH = os.path.join(ASSETS_DIR, "logo_ntu.png")
+LOGO_WIDTH = Cm(8.0)                    # ширина логотипа, як у звіті №1
+LOGO_WIDTH_CSS = "8cm"                  # те саме для PDF
+
 
 class Report:
     """Дані звіту (незалежні від формату) + один рендер на формат."""
 
     def __init__(self, work_number, topic, purpose, *, variant=None,
-                 ministry="Міністерство науки і освіти України",
+                 ministry="МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ",
                  discipline="Архітектура комп'ютера",
+                 logo=None,                                  # шлях до логотипу
                  student_label="Виконала студентка групи",   # стать виконавця!
                  student_group, student_name,
                  teacher_label="Перевірив",                  # стать викладача!
@@ -53,6 +65,7 @@ class Report:
         self.purpose = purpose
         self.variant = variant
         self.ministry = ministry
+        self.logo = logo if logo is not None else LOGO_PATH   # порожній → без лого
         self.discipline = discipline
         self.student_label = student_label
         self.student_group = student_group
@@ -136,16 +149,21 @@ def render_docx(r, path):
         sec.left_margin, sec.right_margin = Cm(3.0), Cm(1.5)
 
     # --- титульний аркуш (за зразком docx, ВІДМІННИЙ від «Програмування») --
-    _docx_p(doc, r.ministry, c, bold=True, indent=False, space_after=48)
+    _docx_p(doc, r.ministry, c, bold=True, indent=False, space_after=12)
+    if r.logo and os.path.exists(r.logo):        # логотип НТУ під шапкою
+        logo_par = _docx_p(doc, "", c, indent=False, space_after=36)
+        logo_par.add_run().add_picture(r.logo, width=LOGO_WIDTH)
+    else:
+        _docx_p(doc, "", c, indent=False, space_after=36)
     _docx_p(doc, f"Звіт з лабораторної роботи №{r.work_number}", c,
             bold=True, indent=False, space_after=6)
-    _docx_p(doc, f"З дисципліни «{r.discipline}»", c, bold=True,
+    _docx_p(doc, f'З дисципліни "{r.discipline}"', c, bold=True,
             indent=False, space_after=6)
-    _docx_p(doc, f"Тема: “{r.topic.upper()}”", c, bold=True, indent=False,
+    _docx_p(doc, r.topic.upper(), c, bold=True, indent=False,
             space_after=48)
-    # блок виконавця/викладача: відступ 11.25 см праворуч (відступ зліва)
+    # блок виконавця/викладача: вирівнювання праворуч (як у звіті №1)
     right = doc.add_paragraph()
-    right.paragraph_format.left_indent = Cm(11.25)
+    right.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     right.paragraph_format.line_spacing_rule = WD_LINE_SPACING.ONE_POINT_FIVE
     for run_text in (f"{r.student_label} {r.student_group}",
                      r.student_name,
@@ -239,6 +257,10 @@ def render_pdf(r, path):
     if r.variant is not None:
         variant_html = ('<p class="c gap">Хід роботи</p>'
                         f'<p class="c">Варіант {r.variant}</p>')
+    logo_html = ""
+    if r.logo and os.path.exists(r.logo):        # логотип НТУ під шапкою
+        logo_html = (f'<img class="logo" src="file://'
+                     f'{os.path.abspath(r.logo)}">')
     html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     @page {{ size: A4; margin: 30mm 20mm 20mm 30mm; }}
     body {{ font-family: "{MAIN_FONT}", "{FALLBACK_SERIF}", serif;
@@ -246,8 +268,8 @@ def render_pdf(r, path):
     p {{ margin: 0; text-indent: 1.25cm; }}
     .c {{ text-align: center; text-indent: 0; font-weight: bold; }}
     .gap {{ margin-top: 24pt; }}
-    .indent {{ text-indent: 0; font-weight: bold;
-               margin-left: 11.25cm; }}
+    .indent {{ text-indent: 0; font-weight: bold; text-align: right; }}
+    .logo {{ display: block; width: {LOGO_WIDTH_CSS}; margin: 0 auto 30pt; }}
     .formula {{ text-align: center; text-indent: 0; }}
     .fnum {{ float: right; margin-right: 8mm; }}
     .fig {{ text-align: center; page-break-inside: avoid; margin: 6pt 0; }}
@@ -261,10 +283,11 @@ def render_pdf(r, path):
     th {{ font-weight: bold; }}
     .pb {{ page-break-after: always; }}
     </style></head><body>
-    <p class="c" style="margin-bottom:48pt">{esc(r.ministry)}</p>
+    <p class="c" style="margin-bottom:12pt">{esc(r.ministry)}</p>
+    {logo_html}
     <p class="c">Звіт з лабораторної роботи №{r.work_number}</p>
-    <p class="c">З дисципліни «{esc(r.discipline)}»</p>
-    <p class="c gap">Тема: “{esc(r.topic.upper())}”</p>
+    <p class="c">З дисципліни "{esc(r.discipline)}"</p>
+    <p class="c gap">{esc(r.topic.upper())}</p>
     <p class="indent gap">{esc(r.student_label)} {esc(r.student_group)}</p>
     <p class="indent">{esc(r.student_name)}</p>
     <p class="indent gap">{esc(r.teacher_label)} {esc(r.teacher_position)}
