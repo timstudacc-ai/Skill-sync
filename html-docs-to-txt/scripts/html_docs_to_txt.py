@@ -85,6 +85,9 @@ def navtree_sections(fetch, base):
     """
     js = fetch(urllib.parse.urljoin(base, "navtreedata.js"))
     if not js or "var NAVTREE" not in js:
+        # older Doxygen versions ship the same NAVTREE in navtree.js
+        js = fetch(urllib.parse.urljoin(base, "navtree.js"))
+    if not js or "var NAVTREE" not in js:
         return []
     start = js.index("var NAVTREE")
     end = re.search(r"\];", js[start:])
@@ -124,7 +127,13 @@ def navtree_sections(fetch, base):
     node = tree
     while isinstance(node, list) and len(node) == 1 and isinstance(node[0], list):
         node = node[0]
-    # node is now the root entry; its list element holds the top-level sections
+    # node is now the root entry [title, index.html, [sections...]]; keep the
+    # root page (site home / main page) as its own first section
+    root_title = root_url = None
+    if isinstance(node, list) and len(node) >= 2 and isinstance(node[0], str) \
+            and isinstance(node[1], str) and node[1].endswith(".html"):
+        root_title, root_url = node[0], node[1]
+    # its list element holds the top-level sections
     tops = [x for x in node if isinstance(x, list)] if isinstance(node, list) else []
     if len(tops) == 1 and tops[0] and all(isinstance(x, list) for x in tops[0]):
         tops = tops[0]  # unwrap [site, url, [section, ...]] -> [section, ...]
@@ -141,6 +150,8 @@ def navtree_sections(fetch, base):
                     uniq.append(p)
             if uniq:
                 sections.append((top[0], uniq))
+    if root_url:
+        sections.insert(0, (root_title, [root_url]))
     return sections
 
 
@@ -262,7 +273,11 @@ def main():
     ap.add_argument("--quiet", action="store_true")
     a = ap.parse_args()
 
-    base = a.url.rstrip("/") + "/"
+    # a URL pointing at a page (e.g. .../html/index.html) -> use its directory
+    base = a.url.rstrip("/")
+    if base.endswith(".html") or base.endswith(".htm"):
+        base = base.rsplit("/", 1)[0]
+    base += "/"
     fetch = make_fetcher(a.ua, a.delay)
     say = (lambda *x: None) if a.quiet else print
 
@@ -288,11 +303,15 @@ def main():
 
     # ---- fetch pages, expanding short "index" pages (e.g. Doxygen group
     # listings such as Functions / Data types) with their child pages -------
-    EXCLUDE_STEMS = ("index", "pages", "modules", "files", "annotated",
-                     "globals", "dirs", "dir_", "namespaces", "search",
+    # chrome/index pages excluded from index-page child expansion, by exact
+    # stem (prefix matching would wrongly exclude content pages like
+    # structosThreadAttr_t.html / classFoo.html)
+    EXCLUDE_STEMS = {"index", "pages", "modules", "files", "annotated",
+                     "globals", "dirs", "namespaces", "search",
                      "navtree", "doxygen", "menudata", "cookie", "resize",
-                     "dynsections", "tabs", "classe", "function", "struct",
-                     "typedef", "define", "enum", "union")
+                     "dynsections", "tabs", "classes", "functions",
+                     "functions_vars"}
+    EXCLUDE_PREFIXES = ("dir_",)
     INDEX_MIN_CHARS = a.index_min   # shorter page text => index page, expand
 
     def children_of(url):
@@ -303,7 +322,7 @@ def main():
             stem = cu.path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
             if cu.netloc != urllib.parse.urlparse(base).netloc:
                 continue
-            if stem.startswith(EXCLUDE_STEMS):
+            if stem in EXCLUDE_STEMS or stem.startswith(EXCLUDE_PREFIXES):
                 continue
             out.append(child)
         return out
