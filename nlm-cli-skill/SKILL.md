@@ -17,7 +17,11 @@ Pure retrieval pipeline: route to the right notebook -> query it -> synthesize t
 
 ## Phase 0 - Preconditions
 
-1. `command -v nlmq` must succeed. If it does not, tell the user the `nlmq` shim is missing (it should run `scripts/nlmq.py` in this skill), use the Fallback at the bottom **once**, then stop.
+1. `command -v nlmq` must succeed. If it does not, tell the user the `nlmq` shim is missing and restore it **portably** - point it at the skill's own `scripts/nlmq.py` (resolve the skill directory from the location of this SKILL.md; canonical install path is `~/.agents/skills/nlm-cli-skill`):
+
+       ln -sfn ~/.agents/skills/nlm-cli-skill/scripts/nlmq.py ~/.local/bin/nlmq
+
+   Never hardcode the git-repo path in the shim - the repo checkout location changes per machine, the installed skill path does not. Then use the Fallback at the bottom **once**, then stop.
 2. No other setup. Notebook IDs are **never** hardcoded, copied from documents, or guessed - `nlmq` resolves them live.
 
 ## Phase 1 - Route to a notebook
@@ -75,10 +79,10 @@ Weave them together. Do not paste NLM output verbatim; do not ignore the convers
 
 ## Deep troubleshooting
 
-Only after the exit-code table and `nlm login --check` fail to resolve a problem: `reference/nlm_user_guide.md` (CLI internals, auth layers, error catalog).
+Only after the exit-code table and `nlm login --check` fail to resolve a problem: `references/nlm_user_guide.md` (CLI internals, auth layers, error catalog).
 
 ## Fallback (only while `nlmq` is missing)
 
-Use **once** to unblock, then tell the user to restore the shim (`~/.local/bin/nlmq` -> `scripts/nlmq.py` in this skill). This form cannot resolve topics - take the UUID from `nlm notebook list --json`. `jq -e` is mandatory: bare `jq -r '.answer'` prints the string `null` and exits 0 on API errors, which silently fakes a successful answer.
+Use **once** to unblock, then tell the user to restore the shim (`ln -sfn ~/.agents/skills/nlm-cli-skill/scripts/nlmq.py ~/.local/bin/nlmq`). This form cannot resolve topics - take the UUID from `nlm notebook list --json`. `jq -e` is mandatory: bare `jq -r '.answer'` prints the string `null` and exits 0 on API errors, which silently fakes a successful answer.
 
     nlm notebook query <uuid> "<question>" --json --timeout 180 | jq -er '.answer | select(length > 0)'

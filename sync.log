@@ -140,3 +140,12 @@ From github.com:timstudacc-ai/Skill-sync
 Already up to date.
 Everything up-to-date
 2026-09-25 14:37:54 sync_skills: OK: git pull + push origin main completed.
+2026-09-28 13:19:28 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-28 13:19:35 sync_skills: OK: git pull + push origin main completed.
+2026-09-29 15:35:55 sync_skills: DRY-RUN: git pull/push skipped.
+2026-09-29 15:37:07 sync_skills: DRY-RUN: git pull/push skipped.
+2026-09-29 15:37:07 sync_skills: DRY-RUN: git pull/push skipped.
