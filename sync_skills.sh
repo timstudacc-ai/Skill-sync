@@ -7,8 +7,9 @@
 #   Run after git pull to distribute skills to the agent.
 #
 # REVERSE MODE (agent -> repo):
-#   Copies real files from ~/.agents/skills/ into the repo so they can be
-#   committed and pushed. Run after creating/editing a skill locally.
+#   Copies the ENTIRE skill tree (SKILL.md plus scripts/, references/, evals/,
+#   ...) from ~/.agents/skills/ into the repo so they can be committed and
+#   pushed. Run after creating/editing a skill locally.
 #
 #   Why copy instead of symlink?
 #   A symlink pointing outside the repo (~/.agents/skills/) would break on
@@ -39,8 +40,8 @@
 #     On a merge conflict it does nothing and logs the conflict to sync.log
 #     (created next to the repo if missing).
 #   - syncs rules: creates symlinks in ~/.agents/rules/ pointing to entries
-#     in /home/tim/Documents/Cline/Rules/ (override with $RULES_SRC and
-#     $RULES_DEST).
+#     in the rules source directory (resolved from $RULES_SRC, falling back
+#     to <repo>/rules, then $HOME/Documents/Cline/Rules).
 #
 # Examples:
 #   sync_skills.sh                           # repo -> agent (default)
@@ -160,6 +161,14 @@ git_sync() {
 # Creates symlinks in ~/.agents/rules/ pointing to each entry (file or
 # subfolder) in RULES_SRC. Same safety rules as the skills loop: existing
 # entries are only replaced with --force.
+RULES_SRC="${RULES_SRC:-}"
+if [[ -z "$RULES_SRC" ]]; then
+  # Portable resolution: legacy per-user path first, then the in-repo rules
+  # folder, then the generic home location. First existing directory wins.
+  for __cand in "/home/tim/Documents/Cline/Rules" "$REPO/rules" "$HOME/Documents/Cline/Rules"; do
+    if [[ -d "$__cand" ]]; then RULES_SRC="$__cand"; break; fi
+  done
+fi
 RULES_SRC="${RULES_SRC:-/home/tim/Documents/Cline/Rules}"
 RULES_DEST="${RULES_DEST:-$HOME/.agents/rules}"
 
@@ -297,8 +306,9 @@ if [[ "$REVERSE" == 1 ]]; then
 
     if [[ -f "$dst" || -L "$dst" ]]; then
       if [[ -f "$dst" && ! -L "$dst" ]]; then
-        # Regular file — compare content.
-        if cmp -s "$src" "$dst"; then
+        # Regular file — compare the WHOLE skill tree, not just SKILL.md:
+        # helper tools (scripts/, references/, evals/, ...) must sync too.
+        if diff -rq "$dir" "$dst_dir" >/dev/null 2>&1; then
           echo "  =  $name  (content identical)"
           SKIPPED=$((SKIPPED+1))
           continue
@@ -308,7 +318,7 @@ if [[ "$REVERSE" == 1 ]]; then
             echo "  ~  $name  (would update — content differs)"
           else
             echo "  ~  $name  updating (content differs)"
-            cp "$src" "$dst"
+            cp -a "$dir/." "$dst_dir/"
           fi
           CHANGED=$((CHANGED+1))
           continue
@@ -324,8 +334,8 @@ if [[ "$REVERSE" == 1 ]]; then
           echo "  ~  $name  (would replace non-file entry)"
         else
           echo "  ~  $name  replacing non-file entry"
-          rm -rf "$dst"
-          cp "$src" "$dst"
+          rm -rf "$dst_dir"
+          cp -a "$dir" "$dst_dir"
         fi
         CHANGED=$((CHANGED+1))
         continue
@@ -336,10 +346,10 @@ if [[ "$REVERSE" == 1 ]]; then
     fi
 
     if [[ "$DRY_RUN" == 1 ]]; then
-      echo "  +  $name  (would copy -> $dst)"
+      echo "  +  $name  (would copy skill tree -> $dst_dir)"
     else
-      echo "  +  $name  copying -> $dst"
-      cp "$src" "$dst"
+      echo "  +  $name  copying skill tree -> $dst_dir"
+      cp -a "$dir/." "$dst_dir/"
     fi
     CHANGED=$((CHANGED+1))
   done

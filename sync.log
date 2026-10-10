@@ -121,176 +121,31 @@ From github.com:timstudacc-ai/Skill-sync
 Already up to date.
 Everything up-to-date
 2026-09-22 05:30:05 sync_skills: OK: git pull + push origin main completed.
+2026-09-22 09:50:39 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
 From github.com:timstudacc-ai/Skill-sync
  * branch            main       -> FETCH_HEAD
 Already up to date.
 To github.com:timstudacc-ai/Skill-sync.git
-   41c7fea..cc80f35  main -> main
-2026-09-22 07:44:03 sync_skills: OK: git pull + push origin main completed.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-   cc80f35..c3b365c  main       -> origin/main
-Updating cc80f35..c3b365c
-Fast-forward
- .gitignore                                         |   3 +
- SETUP_GUIDE.md                                     |  21 +-
- google-docs-report/SKILL.md                        |   2 +-
- .../{template => assets}/AL_Report_template.docx   | Bin
- .../{template => assets}/CD_Report_template.docx   | Bin
- .../{template => scripts}/generate_report.py       |   7 +-
- .../{template => scripts}/test_report.py           |   0
- .../{template => scripts}/test_report_al.py        |   6 +-
- .../__pycache__/generate_report.cpython-312.pyc    | Bin 27009 -> 0 bytes
- .../__pycache__/generate_report.cpython-314.pyc    | Bin 18710 -> 0 bytes
- lab-report-for-pc-arch/SKILL.md                    |  14 +-
- .../{template => scripts}/lab_report.py            |   2 +-
- .../{template => scripts}/test_report.py           |   0
- .../__pycache__/lab_report.cpython-314.pyc         | Bin 19229 -> 0 bytes
- lab-report/SKILL.md                                |  12 +-
- lab-report/{template => scripts}/lab_report.py     |   2 +-
- lab-report/{template => scripts}/test_report.py    |   0
- .../__pycache__/lab_report.cpython-314.pyc         | Bin 19345 -> 0 bytes
- nlm-cli-skill/references/nlm_user_guide.md         | 985 +++++++++++++++++++++
- skill-creator/SKILL.md                             |   8 +-
- skill-creator/{eval-viewer => assets}/viewer.html  |   0
- .../scripts/__pycache__/__init__.cpython-312.pyc   | Bin 158 -> 0 bytes
- .../__pycache__/package_skill.cpython-312.pyc      | Bin 5611 -> 0 bytes
- .../__pycache__/quick_validate.cpython-312.pyc     | Bin 4410 -> 0 bytes
- .../{eval-viewer => scripts}/generate_review.py    |   4 +-
- 25 files changed, 1036 insertions(+), 30 deletions(-)
- create mode 100644 .gitignore
- rename google-docs-report/{template => assets}/AL_Report_template.docx (100%)
- rename google-docs-report/{template => assets}/CD_Report_template.docx (100%)
- rename google-docs-report/{template => scripts}/generate_report.py (98%)
- rename google-docs-report/{template => scripts}/test_report.py (100%)
- rename google-docs-report/{template => scripts}/test_report_al.py (97%)
- delete mode 100644 google-docs-report/template/__pycache__/generate_report.cpython-312.pyc
- delete mode 100644 google-docs-report/template/__pycache__/generate_report.cpython-314.pyc
- rename lab-report-for-pc-arch/{template => scripts}/lab_report.py (99%)
- rename lab-report-for-pc-arch/{template => scripts}/test_report.py (100%)
- delete mode 100644 lab-report-for-pc-arch/template/__pycache__/lab_report.cpython-314.pyc
- rename lab-report/{template => scripts}/lab_report.py (99%)
- rename lab-report/{template => scripts}/test_report.py (100%)
- delete mode 100644 lab-report/template/__pycache__/lab_report.cpython-314.pyc
- create mode 100644 nlm-cli-skill/references/nlm_user_guide.md
- rename skill-creator/{eval-viewer => assets}/viewer.html (100%)
- delete mode 100644 skill-creator/scripts/__pycache__/__init__.cpython-312.pyc
- delete mode 100644 skill-creator/scripts/__pycache__/package_skill.cpython-312.pyc
- delete mode 100644 skill-creator/scripts/__pycache__/quick_validate.cpython-312.pyc
- rename skill-creator/{eval-viewer => scripts}/generate_review.py (98%)
-Everything up-to-date
-2026-09-23 05:30:09 sync_skills: OK: git pull + push origin main completed.
+   cc80f35..c3b365c  main -> main
+2026-09-22 09:50:43 sync_skills: OK: git pull + push origin main completed.
+2026-09-25 14:37:19 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
 From github.com:timstudacc-ai/Skill-sync
  * branch            main       -> FETCH_HEAD
 Already up to date.
 Everything up-to-date
-2026-09-24 05:30:05 sync_skills: OK: git pull + push origin main completed.
+2026-09-25 14:37:23 sync_skills: OK: git pull + push origin main completed.
+2026-09-25 14:37:51 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
 From github.com:timstudacc-ai/Skill-sync
  * branch            main       -> FETCH_HEAD
 Already up to date.
 Everything up-to-date
-2026-09-25 05:30:07 sync_skills: OK: git pull + push origin main completed.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-   c3b365c..6266fb5  main       -> origin/main
-Updating c3b365c..6266fb5
-Fast-forward
- code-style-embedded/SKILL.md | 126 +++++++++++++++++++++++++++++++++++
- pr-review-rtos/SKILL.md      | 152 +++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 278 insertions(+)
- create mode 100644 code-style-embedded/SKILL.md
- create mode 100644 pr-review-rtos/SKILL.md
-Everything up-to-date
-2026-09-26 05:30:06 sync_skills: OK: git pull + push origin main completed.
+2026-09-25 14:37:54 sync_skills: OK: git pull + push origin main completed.
+2026-09-28 13:19:28 sync_skills: SKIP: rules source '/home/tim/Documents/Cline/Rules' not found.
 From github.com:timstudacc-ai/Skill-sync
  * branch            main       -> FETCH_HEAD
 Already up to date.
 Everything up-to-date
-2026-09-26 12:42:40 sync_skills: OK: git pull + push origin main completed.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-Already up to date.
-Everything up-to-date
-2026-09-27 17:43:47 sync_skills: OK: git pull + push origin main completed.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-Already up to date.
-Everything up-to-date
-2026-09-28 05:30:05 sync_skills: OK: git pull + push origin main completed.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-   fa6cce1..f108a31  main       -> origin/main
-error: Your local changes to the following files would be overwritten by merge:
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..f108a31
-2026-09-29 05:30:10 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-   f108a31..630e34d  main       -> origin/main
-error: Your local changes to the following files would be overwritten by merge:
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..630e34d
-2026-09-30 05:30:03 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-   630e34d..db33fb2  main       -> origin/main
-error: Your local changes to the following files would be overwritten by merge:
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..db33fb2
-2026-10-01 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-error: Your local changes to the following files would be overwritten by merge:
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..db33fb2
-2026-10-03 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-error: Your local changes to the following files would be overwritten by merge:
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..db33fb2
-2026-10-04 05:30:03 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-error: Your local changes to the following files would be overwritten by merge:
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..db33fb2
-2026-10-06 05:30:03 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-error: Your local changes to the following files would be overwritten by merge:
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..db33fb2
-2026-10-08 05:30:45 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-error: Your local changes to the following files would be overwritten by merge:
-	nlm-cli-skill/SKILL.md
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..db33fb2
-2026-10-09 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
-From github.com:timstudacc-ai/Skill-sync
- * branch            main       -> FETCH_HEAD
-error: Your local changes to the following files would be overwritten by merge:
-	nlm-cli-skill/SKILL.md
-	sync.log
-Please commit your changes or stash them before you merge.
-Aborting
-Updating fa6cce1..db33fb2
-2026-10-10 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+2026-09-28 13:19:35 sync_skills: OK: git pull + push origin main completed.
+2026-09-29 15:35:55 sync_skills: DRY-RUN: git pull/push skipped.
+2026-09-29 15:37:07 sync_skills: DRY-RUN: git pull/push skipped.
+2026-09-29 15:37:07 sync_skills: DRY-RUN: git pull/push skipped.
