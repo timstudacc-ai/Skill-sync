@@ -212,3 +212,85 @@ From github.com:timstudacc-ai/Skill-sync
 Already up to date.
 Everything up-to-date
 2026-09-27 17:43:47 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+Everything up-to-date
+2026-09-28 05:30:05 sync_skills: OK: git pull + push origin main completed.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+   fa6cce1..f108a31  main       -> origin/main
+error: Your local changes to the following files would be overwritten by merge:
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..f108a31
+2026-09-29 05:30:10 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+   f108a31..630e34d  main       -> origin/main
+error: Your local changes to the following files would be overwritten by merge:
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..630e34d
+2026-09-30 05:30:03 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+   630e34d..db33fb2  main       -> origin/main
+error: Your local changes to the following files would be overwritten by merge:
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..db33fb2
+2026-10-01 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..db33fb2
+2026-10-03 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..db33fb2
+2026-10-04 05:30:03 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..db33fb2
+2026-10-06 05:30:03 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..db33fb2
+2026-10-08 05:30:45 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+	nlm-cli-skill/SKILL.md
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..db33fb2
+2026-10-09 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.
+From github.com:timstudacc-ai/Skill-sync
+ * branch            main       -> FETCH_HEAD
+error: Your local changes to the following files would be overwritten by merge:
+	nlm-cli-skill/SKILL.md
+	sync.log
+Please commit your changes or stash them before you merge.
+Aborting
+Updating fa6cce1..db33fb2
+2026-10-10 05:30:04 sync_skills: ERROR: git pull origin main failed; doing nothing, no push attempted.

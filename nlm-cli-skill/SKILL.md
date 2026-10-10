@@ -1,6 +1,14 @@
 ---
 name: nlm-cli-skill
-description: Query the user's personal NotebookLM knowledge base through the nlm CLI via the nlmq wrapper. Use whenever the user asks to "ask my notebook", "query NotebookLM", "check my notes", or wants an answer grounded in their own material - Zephyr/nRF, ESP32/ESP-IDF, STM32, embedded Linux, computer architecture, physics labs, PySerial, oscilloscope manuals, Cline docs, or any notebook in their NotebookLM account. Retrieves an answer, synthesizes it with conversation context, then pauses for clarification. Does NOT manage sources and does NOT generate artifacts.
+description: >-
+  Query the user's personal NotebookLM knowledge base through the nlm CLI via
+  the nlmq wrapper. Use whenever the user asks to "ask my notebook", "query
+  NotebookLM", "check my notes", or wants an answer grounded in their own
+  material - Zephyr/nRF, ESP32/ESP-IDF, STM32, embedded Linux, computer
+  architecture, physics labs, PySerial, oscilloscope manuals, Cline docs, or any
+  notebook in their NotebookLM account. Retrieves an answer, synthesizes it with
+  conversation context, then pauses for clarification. Does NOT manage sources
+  and does NOT generate artifacts.
 ---
 
 # NotebookLM Retrieval & Synthesis Protocol
