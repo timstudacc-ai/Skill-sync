@@ -1,8 +1,9 @@
 # Reference forum post: "Problem with socket configuration while using MXCHIP Wi-Fi Component"
 
-> Real-world example of a successful ST Community forum post. Note the structure:
-> context first, precise symptom, numbered repro steps, minimal code, environment/workaround
-> notes, motivation, and an explicit open-ended question.
+> Real-world example of a successful ST Community forum post. Note how it reads as one
+> continuous first-person story — greeting, a paragraph of context, the precise symptom, a
+> small numbered repro block, minimal code, a workaround/motivation paragraph, and one
+> explicit open-ended question — with almost no headings and no bullet lists.
 
 ---
 
