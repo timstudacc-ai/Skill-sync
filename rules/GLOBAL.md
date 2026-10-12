@@ -1,1 +1,0 @@
-/home/user/Documents/Cline/Rules/GLOBAL.md
