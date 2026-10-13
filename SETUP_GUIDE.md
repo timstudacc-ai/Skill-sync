@@ -31,18 +31,19 @@ Cline reads skills from **three possible locations** (per the CLI Reference and 
 
 ## 3. Quick Setup (One Command)
 
-Clone this repo and copy all skills into the cross-tool global directory:
+Clone this repo and let the sync script create all skill links:
 
 ```bash
 git clone git@github.com:timstudacc-ai/Skill-sync.git ~/skill-sync
-cd ~/.agents/skills
-for n in memory-bank nlm nlm-cli-skill notebooklm-sources planning-skill session-report skill-creator socrat; do
-  ln -s ~/skill-sync/$n ~/.agents/skills/$n
-done
-
+~/skill-sync/sync_skills.sh ~/skill-sync
 ```
 
 **That's it.** Restart Cline and all skills will be discovered automatically.
+
+The script creates **directory-level symlinks** in `~/.agents/skills/` — one per
+skill folder — so the *entire* skill content (`SKILL.md`, `scripts/`,
+`references/`, `assets/`, ...) is available to the agent, not just the main
+file. Edits made through the symlink land directly in the repo working tree.
 
 ---
 
@@ -70,13 +71,17 @@ git clone git@github.com:timstudacc-ai/Skill-sync.git /tmp/skill-sync
 mkdir -p ~/.agents/skills
 ```
 
-### Step 4 — Copy Skills Into Place
+### Step 4 — Sync Skills Into Place
 
 ```bash
-rsync -a --delete /tmp/skill-sync/ ~/.agents/skills/
+~/skill-sync/sync_skills.sh ~/skill-sync
 ```
 
-This copies **all** skill directories (each containing a `SKILL.md` file) and the `GEMINI.md` rules file. The `--delete` flag ensures the target matches the source exactly (removes stale skills, adds new ones).
+This creates one symlink per skill folder in `~/.agents/skills/`. The `--dry-run`
+flag previews changes without touching the filesystem. Temp/build junk
+(`__pycache__/`, `*.pyc`) is never treated as skill content, and skill folders
+that exist in `~/.agents/skills/` as real directories are automatically
+re-linked when their content matches the repo ("split-brain healing").
 
 ### Step 5 — Copy the Global Rules
 
@@ -166,12 +171,12 @@ Detailed instructions for Cline to follow when this skill is activated.
 To pull the latest skills from the remote repository:
 
 ```bash
-git clone git@github.com:timstudacc-ai/Skill-sync.git /tmp/skill-sync
-rsync -a --delete /tmp/skill-sync/ ~/.agents/skills/
-rm -rf /tmp/skill-sync
+cd ~/skill-sync && git pull
+~/skill-sync/sync_skills.sh
 ```
 
-**Or** set up the existing cron-based auto-sync (if this device has a cron daemon):
+The script also runs `git pull`/`git push` itself at the end of each default-mode
+run, so a cron entry alone keeps skills current:
 
 ```bash
 # Add to crontab (crontab -e):
@@ -180,7 +185,39 @@ rm -rf /tmp/skill-sync
 
 ---
 
-## 7. Troubleshooting
+## 7. Two-Way Sync Reference
+
+Skills are edited in two places: inside the repo, or "in place" by an agent
+through the `~/.agents/skills/` symlink (which writes straight into the repo).
+If a skill ever exists as a *real directory* in `~/.agents/skills/` instead of a
+symlink, the two copies can drift apart ("split-brain"). The script handles this:
+
+| Situation | What the script does |
+|---|---|
+| Agent entry is a symlink into the repo | Left alone — already the desired state |
+| Agent entry is a real dir, content **identical** to repo | Automatically re-linked (healed) |
+| Agent entry is a real dir, content **differs** | Drift is listed file-by-file; nothing is overwritten |
+| Repo skill was deleted, agent symlink remains | Reported as dangling; `--prune` removes it |
+
+Commands:
+
+```bash
+sync_skills.sh --dry-run            # preview all of the above, change nothing
+sync_skills.sh --prune              # delete dangling repo-pointing symlinks
+sync_skills.sh --force              # default mode: repo wins on drifted dirs
+
+# Agent -> repo (after editing a skill outside the repo):
+sync_skills.sh --reverse            # copy whole skill trees back into the repo
+sync_skills.sh --reverse --force lab-report   # overwrite repo copy for one skill
+```
+
+In reverse mode a whole-tree diff (excluding `__pycache__`/`*.pyc`/`.git`) decides
+whether the repo copy is stale; without `--force` differing content is skipped,
+never overwritten. After a reverse run: `git add -A && git commit && git push`.
+
+---
+
+## 8. Troubleshooting
 
 | Symptom | Fix |
 |---|---|

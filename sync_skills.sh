@@ -28,11 +28,14 @@
 #
 # Usage:
 #   sync_skills.sh [REPO_PATH] [--dry-run] [--force] [--reverse]
-#                  [--source AGENT_DIR] [skill1 ...]
+#                  [--prune] [--source AGENT_DIR] [skill1 ...]
 #
 #   --dry-run      show what would change without touching the filesystem
 #   --force        overwrite existing entries at the destination
 #   --reverse      pull agent skill content into the repo (copy, not symlink)
+#   --prune        delete agent-dir symlinks that point into the repo but whose
+#                  target no longer exists (repo skill was removed). Real
+#                  directories are NEVER pruned.
 #   --source PATH  agent skills directory (reverse mode only; default: ~/.agents/skills)
 #
 # In default mode the script also:
@@ -51,7 +54,7 @@
 set -euo pipefail
 
 usage() {
-  sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,47p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 }
 
@@ -59,6 +62,7 @@ usage() {
 DRY_RUN=0
 FORCE=0
 REVERSE=0
+PRUNE=0
 AGENT_SOURCE=""
 declare -a POSARGS=()
 for a in "$@"; do
@@ -66,6 +70,7 @@ for a in "$@"; do
     --dry-run) DRY_RUN=1 ;;
     --force|--overwrite) FORCE=1 ;;
     --reverse) REVERSE=1 ;;
+    --prune) PRUNE=1 ;;
     --source)
       AGENT_SOURCE="__NEXT__"
       ;;
@@ -245,6 +250,31 @@ already_in_repo() {
   target="$(readlink -f "$target" 2>/dev/null || echo "$target")"
   [[ "$target" == "$REPO/"* || "$target" == "$REPO" ]]
 }
+
+# ---- helper: junk exclusions for tree diffs and copies ----------------------
+# Build/cache artifacts (__pycache__, *.pyc) and nested .git must never count
+# as skill content: they cause false "content differs" reports and would be
+# copied into the repo by reverse mode. diff ignores them via -x; copies use
+# rsync --exclude when available, with a cp+cleanup fallback otherwise.
+JUNK_DIRS='__pycache__'
+JUNK_FILES='*.pyc *.pyo'
+
+tree_diff() {
+  diff -rq -x "$JUNK_DIRS" -x '*.pyc' -x '*.pyo' -x '.git' "$1" "$2"
+}
+
+tree_copy() {
+  local src="$1" dst="$2"
+  mkdir -p "$dst"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --exclude "$JUNK_DIRS" --exclude '*.pyc' --exclude '*.pyo' \
+          --exclude '.git' "$src/" "$dst/"
+  else
+    cp -a "$src/." "$dst/"
+    find "$dst" -name "$JUNK_DIRS" -type d -exec rm -rf {} + 2>/dev/null || true
+    find "$dst" \( -name '*.pyc' -o -name '*.pyo' \) -delete 2>/dev/null || true
+  fi
+}
 # ---- main: choose direction ------------------------------------------------
 if [[ "$REVERSE" == 1 ]]; then
 
@@ -308,7 +338,9 @@ if [[ "$REVERSE" == 1 ]]; then
       if [[ -f "$dst" && ! -L "$dst" ]]; then
         # Regular file — compare the WHOLE skill tree, not just SKILL.md:
         # helper tools (scripts/, references/, evals/, ...) must sync too.
-        if diff -rq "$dir" "$dst_dir" >/dev/null 2>&1; then
+        # Build-artifact junk (__pycache__ etc.) is excluded from the diff so
+        # it never triggers a false "content differs".
+        if tree_diff "$dir" "$dst_dir" >/dev/null 2>&1; then
           echo "  =  $name  (content identical)"
           SKIPPED=$((SKIPPED+1))
           continue
@@ -318,7 +350,7 @@ if [[ "$REVERSE" == 1 ]]; then
             echo "  ~  $name  (would update — content differs)"
           else
             echo "  ~  $name  updating (content differs)"
-            cp -a "$dir/." "$dst_dir/"
+            tree_copy "$dir" "$dst_dir"
           fi
           CHANGED=$((CHANGED+1))
           continue
@@ -335,7 +367,7 @@ if [[ "$REVERSE" == 1 ]]; then
         else
           echo "  ~  $name  replacing non-file entry"
           rm -rf "$dst_dir"
-          cp -a "$dir" "$dst_dir"
+          tree_copy "$dir" "$dst_dir"
         fi
         CHANGED=$((CHANGED+1))
         continue
@@ -349,7 +381,7 @@ if [[ "$REVERSE" == 1 ]]; then
       echo "  +  $name  (would copy skill tree -> $dst_dir)"
     else
       echo "  +  $name  copying skill tree -> $dst_dir"
-      cp -a "$dir/." "$dst_dir/"
+      tree_copy "$dir" "$dst_dir"
     fi
     CHANGED=$((CHANGED+1))
   done
@@ -376,6 +408,8 @@ else
   CHANGED=0
   SKIPPED=0
   FAILED=0
+  HEALED=0
+  STALE=0
 
   shopt -s nullglob
   for dir in "$REPO"/*/; do
@@ -389,6 +423,41 @@ else
       if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
         echo "  =  $name  (already linked)"
         SKIPPED=$((SKIPPED+1))
+        continue
+      fi
+
+      # Split-brain healing: an agent entry that is a real directory (not a
+      # symlink) shadows the repo copy and silently diverges from it. When
+      # its content is identical to the repo it is safe to re-link; when it
+      # differs the drift is reported and only --force replaces it.
+      if [[ -d "$dst" && ! -L "$dst" ]]; then
+        if tree_diff "$src" "$dst" >/dev/null 2>&1; then
+          if [[ "$DRY_RUN" == 1 ]]; then
+            echo "  ~  $name  (would heal: identical real dir -> symlink)"
+          else
+            echo "  ~  $name  healing split-brain (identical real dir -> symlink)"
+            rm -rf "$dst"
+            ln -s "$src" "$dst"
+          fi
+          HEALED=$((HEALED+1))
+          continue
+        fi
+
+        echo "  !  $name  drifted real dir; repo differs:" >&2
+        tree_diff "$src" "$dst" | head -10 | sed 's/^/        /' >&2 || true
+        if [[ "$FORCE" == 1 ]]; then
+          if [[ "$DRY_RUN" == 1 ]]; then
+            echo "  ~  $name  (would replace drifted dir with symlink — repo wins)"
+          else
+            echo "  ~  $name  replacing drifted dir with symlink (repo wins)"
+            rm -rf "$dst"
+            ln -s "$src" "$dst"
+          fi
+          CHANGED=$((CHANGED+1))
+          continue
+        fi
+        echo "       keep agent edits: sync_skills.sh --reverse $name | overwrite: --force" >&2
+        FAILED=$((FAILED+1))
         continue
       fi
 
@@ -419,9 +488,34 @@ else
   done
 
   echo "----"
-  echo "created/updated: $CHANGED | already ok: $SKIPPED | conflicts skipped: $FAILED"
+  echo "created/updated: $CHANGED | healed: $HEALED | already ok: $SKIPPED | conflicts skipped: $FAILED"
   if [[ "$FAILED" -gt 0 && "$DRY_RUN" == 0 ]]; then
     echo "Re-run with --force to overwrite conflicting entries." >&2
+  fi
+
+  # ---- stale entry report / prune --------------------------------------------
+  # Symlinks in the agent dir pointing into the repo whose target no longer
+  # exists are dead weight. Only --prune removes them; real directories are
+  # never touched (they may hold local-only skills).
+  for entry in "$DEST"/*; do
+    [[ -L "$entry" ]] || continue
+    target="$(readlink "$entry")"
+    [[ "$target" == "$REPO" || "$target" == "$REPO/"* ]] || continue
+    [[ -e "$entry" ]] && continue
+    if [[ "$PRUNE" == 1 ]]; then
+      if [[ "$DRY_RUN" == 1 ]]; then
+        echo "  -  $(basename "$entry")  (would prune dangling link)"
+      else
+        echo "  -  $(basename "$entry")  pruning dangling link"
+        rm -f "$entry"
+      fi
+    else
+      echo "  !  $(basename "$entry")  dangling repo link (target removed); run with --prune to delete" >&2
+    fi
+    STALE=$((STALE+1))
+  done
+  if [[ "$STALE" -gt 0 ]]; then
+    echo "stale/dangling repo links found: $STALE"
   fi
 
   # Rules symlinks (source of truth: $RULES_SRC -> ~/.agents/rules)
