@@ -9,7 +9,6 @@ description: >-
   notebook in their NotebookLM account. Retrieves an answer, synthesizes it with
   conversation context, then pauses for clarification. Does NOT manage sources
   and does NOT generate artifacts.
-disabled: true
 ---
 
 # NotebookLM Retrieval & Synthesis Protocol
