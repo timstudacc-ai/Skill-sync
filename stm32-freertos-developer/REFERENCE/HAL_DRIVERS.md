@@ -2,6 +2,7 @@
 
 This document describes how to integrate peripherals such as UART, ADC, I2C and TIM with FreeRTOS.
 
+
 ---
 
 ## UART DMA + Queue (IDLE interrupt)
