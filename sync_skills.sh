@@ -6,6 +6,13 @@
 #   Creates symlinks in ~/.agents/skills/ pointing to real files in the repo.
 #   Run after git pull to distribute skills to the agent.
 #
+# SELECTIVE MODE (repo -> chosen destination):
+#   sync_skills.sh SKILL_1 [SKILL_2 ... SKILL_n] DEST_PATH
+#   Symlinks ONLY the listed skills into DEST_PATH (e.g. a particular
+#   workspace's skills dir; created if missing). Each SKILL is a bare skill
+#   name or a path to a skill directory. Needs at least 2 positionals:
+#   [skill ...] destination. Rules sync and git pull/push are skipped.
+#
 # REVERSE MODE (agent -> repo):
 #   Copies the ENTIRE skill tree (SKILL.md plus scripts/, references/, evals/,
 #   ...) from ~/.agents/skills/ into the repo so they can be committed and
@@ -16,7 +23,8 @@
 #   other machines. Copy ensures git tracks the actual content.
 #
 # The repository path is resolved from the first of:
-#   1. a positional CLI argument
+#   1. a positional CLI argument (only when fewer than 2 positionals are
+#      given in default mode; with 2+ the selective syntax applies)
 #   2. the $SKILLS env var
 #   3. the local git work-tree root of the directory containing this script
 #   4. $HOME/skills
@@ -29,6 +37,8 @@
 # Usage:
 #   sync_skills.sh [REPO_PATH] [--dry-run] [--force] [--reverse]
 #                  [--prune] [--source AGENT_DIR] [skill1 ...]
+#   sync_skills.sh SKILL_1 [SKILL_2 ... SKILL_n] DEST_PATH [--dry-run]
+#                  [--force] [--prune]
 #
 #   --dry-run      show what would change without touching the filesystem
 #   --force        overwrite existing entries at the destination
@@ -47,14 +57,16 @@
 #     to <repo>/rules, then $HOME/Documents/Cline/Rules).
 #
 # Examples:
-#   sync_skills.sh                           # repo -> agent (default)
+#   sync_skills.sh                           # repo -> agent (full sync)
 #   sync_skills.sh --reverse                 # agent -> repo
-#   sync_skills.sh --reverse --force lab-report  # pull specific skill
+#   sync_skills.sh --reverse --force lab-report      # pull specific skill
+#   sync_skills.sh anki /tmp/my-ws/skills           # one skill -> workspace
+#   sync_skills.sh anki socrat ~/work/my-ws/skills  # two skills -> workspace
 #
 set -euo pipefail
 
 usage() {
-  sed -n '2,47p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,64p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 }
 
@@ -65,6 +77,7 @@ REVERSE=0
 PRUNE=0
 AGENT_SOURCE=""
 declare -a POSARGS=()
+# Flag parsing: collect --dry-run, --force, --reverse, --prune, --source, and positional args.
 for a in "$@"; do
   case "$a" in
     --dry-run) DRY_RUN=1 ;;
@@ -96,8 +109,15 @@ REPO_FROM_POSITIONAL=0
 if [[ "${#POSARGS[@]}" -gt 0 ]]; then
   first="${POSARGS[0]}"
   # In reverse mode, a bare name (no slash) is a skill filter, not a repo
-  # path — rely on auto-resolution instead.
-  if [[ "$REVERSE" == 0 || "$first" == */* ]]; then
+  # path — rely on auto-resolution instead. In default mode with 2+
+  # positionals the selective syntax applies ([skill ...] destination), so
+  # the repo is auto-resolved instead of taken from the first argument.
+  if [[ "$REVERSE" == 1 ]]; then
+    if [[ "$first" == */* ]]; then
+      RESOLVE_REPO="$first"
+      REPO_FROM_POSITIONAL=1
+    fi
+  elif [[ "${#POSARGS[@]}" -lt 2 ]]; then
     RESOLVE_REPO="$first"
     REPO_FROM_POSITIONAL=1
   fi
@@ -107,6 +127,7 @@ if [[ -z "$RESOLVE_REPO" && -n "${SKILLS:-}" ]]; then
   RESOLVE_REPO="$SKILLS"
 fi
 
+# Resolve repo path: positional arg > $SKILLS env > git toplevel > $HOME/skills
 if [[ -z "$RESOLVE_REPO" ]]; then
   SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   if GIT_ROOT="$(cd "$SELF_DIR" && git rev-parse --show-toplevel 2>/dev/null)"; then
@@ -122,6 +143,18 @@ REPO="$(readlink -f "$RESOLVE_REPO" 2>/dev/null || echo "$RESOLVE_REPO")"
 if [[ ! -d "$REPO" ]]; then
   echo "sync_skills: repository not found: '$REPO' (searched arg, \$SKILLS, script location, \$HOME/skills)" >&2
   exit 1
+fi
+
+# ---- selective mode: [skill ...] destination --------------------------------
+# Default mode with 2+ positionals: every positional except the last is a
+# skill selector, the last one is the destination directory for the links.
+SELECTIVE=0
+SKILL_SELECTORS=()
+if [[ "$REVERSE" == 0 && "${#POSARGS[@]}" -ge 2 ]]; then
+  SELECTIVE=1
+  SELECTIVE_N=$(( ${#POSARGS[@]} - 1 ))
+  DEST_ARG="${POSARGS[$SELECTIVE_N]}"
+  SKILL_SELECTORS=("${POSARGS[@]:0:$SELECTIVE_N}")
 fi
 
 # ---- resolve the agent skills directory ------------------------------------
@@ -398,12 +431,23 @@ else
   # ═══════════════════════════════════════════════════════════════════════════
   # DEFAULT MODE — repo -> agent (symlink)
   # ═══════════════════════════════════════════════════════════════════════════
-  DEST="${SKILLS_DEST:-$HOME/.agents/skills}"
+  if [[ "$SELECTIVE" == 1 ]]; then
+    DEST="$DEST_ARG"
+  else
+    DEST="${SKILLS_DEST:-$HOME/.agents/skills}"
+  fi
+  if [[ -e "$DEST" && ! -d "$DEST" ]]; then
+    echo "sync_skills: destination exists but is not a directory: '$DEST'" >&2
+    exit 1
+  fi
   mkdir -p "$DEST"
 
   echo "Syncing skills from: $REPO"
   echo "            into: $DEST"
   if [[ "$DRY_RUN" == 1 ]]; then echo "(dry-run — no changes will be made)"; fi
+  if [[ "$SELECTIVE" == 1 ]]; then
+    echo "(selective skills: ${SKILL_SELECTORS[*]})"
+  fi
 
   CHANGED=0
   SKIPPED=0
@@ -412,12 +456,45 @@ else
   STALE=0
 
   shopt -s nullglob
-  for dir in "$REPO"/*/; do
-    name="$(basename "$dir")"
-    [[ -f "$dir/SKILL.md" ]] || continue
 
-    src="$REPO/$name"
+  # Skill list: every repo skill in full mode, only the selected ones in
+  # selective mode. Selectors are bare names (resolved against the repo) or
+  # paths to skill directories.
+  SKILL_DIRS=()
+  if [[ "$SELECTIVE" == 1 ]]; then
+    for sel in "${SKILL_SELECTORS[@]}"; do
+      if [[ "$sel" == */* ]]; then
+        cand="$(readlink -f "$sel" 2>/dev/null || echo "$sel")"
+      else
+        cand="$REPO/$sel"
+      fi
+      if [[ -f "$cand/SKILL.md" ]]; then
+        SKILL_DIRS+=("$cand")
+      else
+        echo "  !  '$sel' is not a skill — no SKILL.md at '$cand' (skipped)" >&2
+        FAILED=$((FAILED+1))
+      fi
+    done
+  else
+    for d in "$REPO"/*/; do
+      [[ -f "${d}SKILL.md" ]] || continue
+      SKILL_DIRS+=("${d%/}")
+    done
+  fi
+
+  for dir in ${SKILL_DIRS[@]+"${SKILL_DIRS[@]}"}; do
+    name="$(basename "$dir")"
+
+    src="$(readlink -f "$dir")"
     dst="$DEST/$name"
+
+    # Never link a skill onto itself (e.g. destination inside the repo): a
+    # real directory at dst that IS the skill would be rm -rf'd by healing.
+    if [[ -d "$dst" && ! -L "$dst" && "$(readlink -f "$dst")" == "$src" ]]; then
+      echo "  !  $name  destination resolves to the skill itself: '$dst' (skipped)" >&2
+      FAILED=$((FAILED+1))
+      continue
+    fi
 
     if [[ -e "$dst" || -L "$dst" ]]; then
       if [[ -L "$dst" && "$(readlink "$dst")" == "$src" ]]; then
@@ -518,17 +595,25 @@ else
     echo "stale/dangling repo links found: $STALE"
   fi
 
-  # Rules symlinks (source of truth: $RULES_SRC -> ~/.agents/rules)
-  echo ""
-  sync_rules
-
-  # git pull/push only after local syncing is done.
-  echo ""
-  if [[ "$DRY_RUN" == 1 ]]; then
-    echo "(dry-run — skipping git pull/push)"
-    log "DRY-RUN: git pull/push skipped."
+  # Rules symlinks and git pull/push belong to the full sync into the agent
+  # runtime; selective mode targets one workspace destination only.
+  if [[ "$SELECTIVE" == 1 ]]; then
+    echo ""
+    echo "(selective mode — skipping rules sync and git pull/push)"
+    log "SELECTIVE: ${SKILL_SELECTORS[*]} -> $DEST (rules/git skipped)."
   else
-    git_sync || true
+    # Rules symlinks (source of truth: $RULES_SRC -> ~/.agents/rules)
+    echo ""
+    sync_rules
+
+    # git pull/push only after local syncing is done.
+    echo ""
+    if [[ "$DRY_RUN" == 1 ]]; then
+      echo "(dry-run — skipping git pull/push)"
+      log "DRY-RUN: git pull/push skipped."
+    else
+      git_sync || true
+    fi
   fi
 fi
 
