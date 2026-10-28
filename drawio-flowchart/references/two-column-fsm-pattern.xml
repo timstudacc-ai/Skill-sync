@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pattern: happy path in a left column; error handling as a stacked right column;
+  short cross-column edges run in PARALLEL between the two columns (this is the
+  "reading-aligned overlap" the good example relies on).
+
+  Match this file against references/good-overlap-example.png in this same folder.
+  The image shows the same pattern: announce / run / agent-loop on the left,
+  "enter error -> disconnect -> release -> report -> wait -> verdict" on the right,
+  and a dashed loop-back on the FAR LEFT consistent channel.
+
+  Why parallel overlapping edges are good here, and not bad spaghetti:
+    1. Each edge between columns is a SHORT stub (no <Array> with 3+ waypoints).
+    2. The cross-column edges share one routing channel at x=440-490 area.
+    3. Each cross-column edge is a member of a SMALL set of parallel edges
+       (all going from left -> right at the same height band). The reader's eye
+       reads them as "these all converge into the error funnel".
+    4. The right column reads top-to-bottom as a single ordered cleanup path.
+-->
+<mxfile host="app.diagrams.net">
+  <diagram id="two-column-demo" name="Two-column FSM pattern">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <!-- LEFT column: happy path -->
+        <mxCell id="start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Thread starts" vertex="1">
+          <mxGeometry height="50" width="220" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="h1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Announce service start" vertex="1">
+          <mxGeometry height="60" width="220" x="40" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="h2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Run the agent loop" vertex="1">
+          <mxGeometry height="60" width="220" x="40" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="d_loop" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="loop reported&#xa;an error?" vertex="1">
+          <mxGeometry height="80" width="220" x="40" y="300" as="geometry" />
+        </mxCell>
+        <!-- RIGHT column: error handling as a stacked cleanup -->
+        <mxCell id="e1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Enter error handling" vertex="1">
+          <mxGeometry height="60" width="220" x="500" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Disconnect cleanly" vertex="1">
+          <mxGeometry height="60" width="220" x="500" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Release network resources" vertex="1">
+          <mxGeometry height="60" width="220" x="500" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Report the failure" vertex="1">
+          <mxGeometry height="60" width="220" x="500" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Wait for verdict" vertex="1">
+          <mxGeometry height="60" width="220" x="500" y="680" as="geometry" />
+        </mxCell>
+        <mxCell id="d_verdict" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="recovered or&#xa;fault?" vertex="1">
+          <mxGeometry height="80" width="220" x="500" y="770" as="geometry" />
+        </mxCell>
+        <!-- Forward-flow edges in the left column, straight (no <Array>) -->
+        <mxCell id="fh1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="h1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fh2" edge="1" parent="1" source="h1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="h2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fh3" edge="1" parent="1" source="h2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="d_loop">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Healthy "stay in loop" dashed return, in ONE consistent left channel at x=10 -->
+        <mxCell id="lh" edge="1" parent="1" source="d_loop" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;dashed=1;strokeColor=#000000;labelBackgroundColor=none;" target="h2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="10" y="340" />
+              <mxPoint x="10" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <!-- Cross-column edges (the GOOD parallel overlap): all share the band x=270-500 -->
+        <mxCell id="fhx1" edge="1" parent="1" source="d_loop" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;dashed=1;strokeColor=#000000;labelBackgroundColor=none;" target="e1" value="error">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fe1" edge="1" parent="1" source="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="e2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fe2" edge="1" parent="1" source="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="e3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fe3" edge="1" parent="1" source="e3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="e4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fe4" edge="1" parent="1" source="e4" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="e5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fe5" edge="1" parent="1" source="e5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="d_verdict">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- Verdict branching: two SHORT stubs; "recovered" loops back to "h1" via the LEFT channel -->
+        <mxCell id="frec" edge="1" parent="1" source="d_verdict" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;dashed=1;strokeColor=#000000;labelBackgroundColor=none;" target="h1" value="recovered">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="475" y="810" />
+              <mxPoint x="475" y="150" />
+              <mxPoint x="260" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fflt" edge="1" parent="1" source="d_verdict" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;strokeColor=#000000;labelBackgroundColor=none;" target="e1" value="fault - halt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

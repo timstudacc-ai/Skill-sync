@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pattern: cascade of decisions as a tight staircase, with side-branch boxes
+  aligned to the source-decision Y so the connecting edge is a short stub.
+
+  Match this file against references/decision-example.png in this same folder.
+  The image shows a five-rhombus staircase with side boxes (init / settle /
+  re-sync / Wi-Fi-lost) all sitting at the same Y as the rhombus that fires them.
+
+  Key rules visible here:
+    - rhombi are stacked in one slightly-offset column (X within ~20 units)
+    - vertical edges between rhombi are straight (no <Array> detour)
+    - side box ENTERS via entryX=0;entryY=0.5 from the rhombus's exitX=0;exitY=0.5
+    - loop-back edges (dashed) all run in ONE channel at x=40
+    - one short verb-phrase label per node; no shape=note; no paragraphs
+-->
+<mxfile host="app.diagrams.net">
+  <diagram id="cascade-demo" name="Decision cascade pattern">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Thread starts" vertex="1">
+          <mxGeometry height="50" width="220" x="320" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="init" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Wait for the next wake-up" vertex="1">
+          <mxGeometry height="60" width="240" x="310" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="d1" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="What woke&#xa;the thread?" vertex="1">
+          <mxGeometry height="80" width="220" x="320" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="RTC alarm?" vertex="1">
+          <mxGeometry height="80" width="220" x="330" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="d3" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Service started?" vertex="1">
+          <mxGeometry height="80" width="220" x="340" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="d4" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Time resync due?" vertex="1">
+          <mxGeometry height="80" width="220" x="350" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="d5" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Wi-Fi lost?" vertex="1">
+          <mxGeometry height="80" width="220" x="360" y="650" as="geometry" />
+        </mxCell>
+        <!-- Side boxes: each at the same Y as the rhombus that fires it -->
+        <mxCell id="idle" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Bring up time sync (SNTP)" vertex="1">
+          <mxGeometry height="70" width="240" x="40" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="resync" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Re-fetch network time into the RTC" vertex="1">
+          <mxGeometry height="70" width="240" x="40" y="555" as="geometry" />
+        </mxCell>
+        <mxCell id="wifi" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#000000;strokeColor=#000000;fontColor=#FFFFFF;labelBackgroundColor=none;" value="Tear down time sync" vertex="1">
+          <mxGeometry height="70" width="240" x="40" y="665" as="geometry" />
+        </mxCell>
+        <!-- Edges: top-down straight, no <Array> -->
+        <mxCell id="e1" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="init">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="init" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#000000;labelBackgroundColor=none;" target="d1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="d1" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;strokeColor=#000000;labelBackgroundColor=none;" target="d2" value="RTC alarm">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="d2" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;strokeColor=#000000;labelBackgroundColor=none;" target="d3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="d3" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;strokeColor=#000000;labelBackgroundColor=none;" target="idle">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="d3" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;strokeColor=#000000;labelBackgroundColor=none;" target="d4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="d4" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;strokeColor=#000000;labelBackgroundColor=none;" target="resync">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="d4" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;strokeColor=#000000;labelBackgroundColor=none;" target="d5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" edge="1" parent="1" source="d5" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;strokeColor=#000000;labelBackgroundColor=none;" target="wifi">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <!-- All loop-backs in ONE channel at x=40; exactly two waypoints each -->
+        <mxCell id="lb_idle" edge="1" parent="1" source="idle" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;dashed=1;strokeColor=#000000;labelBackgroundColor=none;" target="init">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="480" />
+              <mxPoint x="40" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lb_resync" edge="1" parent="1" source="resync" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;dashed=1;strokeColor=#000000;labelBackgroundColor=none;" target="init">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="590" />
+              <mxPoint x="40" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="lb_wifi" edge="1" parent="1" source="wifi" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;dashed=1;strokeColor=#000000;labelBackgroundColor=none;" target="init">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="40" y="700" />
+              <mxPoint x="40" y="150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
