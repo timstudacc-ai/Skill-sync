@@ -34,8 +34,7 @@ Upon receiving a task:
 
 ### Phase 2: Plan Generation (Artifact Output)
 Once the developer answers your questions (or approves your default assumptions):
-Create a Markdown **Artifact Document** (`execution_plan.md`) containing the structured execution plan. 
-Set `RequestFeedback: true` and `UserFacing: true` in `ArtifactMetadata` so an interactive **"Proceed / Approve"** UI button is presented to the developer.
+Create a Markdown plan document
 
 Structure the execution plan in the artifact strictly by step using the following format:
 
@@ -50,8 +49,8 @@ After creating the artifact, output a brief summary in text pointing to the arti
 ---
 
 ### Phase 3: Revision or Approval
-* If the developer requests changes or provides feedback: Update the artifact (`execution_plan.md`) accordingly with necessary modifications and re-submit for approval.
-* If the developer approves (or clicks **Proceed**): Transition directly to **Phase 4**.
+* If the developer requests changes or provides feedback: Update the plan accordingly with necessary modifications and re-submit for approval.
+* If the developer approves. Transition directly to **Phase 4**.
 
 ---
 

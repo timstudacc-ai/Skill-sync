@@ -80,6 +80,7 @@ These rules came from a document review round; the module now enforces them, and
 5. **Table captions are LEFT-aligned** — use `add_table_caption()`.
 6. **Lists must be REAL Word lists, not fake text prefixes.** A manual `• item` or `1. item` string in a plain paragraph does not survive the .docx → Google Doc conversion as a list object — Google Docs imports it as plain text, so the list can't be extended and doesn't renumber. `generate_report.py` now creates true lists by adding a numbering definition (`w:abstractNum` + `w:num` in `numbering.xml`) and referencing it from each item paragraph via `w:numPr`. python-docx has NO high-level list API and `NumberingPart.new()` raises `NotImplementedError`, so the module constructs the numbering part manually via the OPC layer when the template lacks one (the CD template already has one — the module only appends its own definitions, tagged with a custom `w:tplc`, never touching existing ones). **The decimal level definition must include `<w:start w:val="1"/>`** — Word defaults the counter to 1 but Google Docs starts at 0 when `w:start` is absent (review round 2). Never regress to text-prefix "lists".
 7. **All text inside tables is left-aligned** — enforced by `_left_align_table()` for both data and glossary tables.
+8. **Captions carry zero first-line and left indentation.** Caption paragraphs inherit the `Normal` style's ~1 cm first-line indent from docDefaults; a LEFT caption then lands off the margin and a CENTER caption sits off the page centre. `_add_caption()` — shared by `add_table_caption()` and `add_figure_caption()` — zeroes `left_indent` and `first_line_indent` explicitly. If you build a caption by hand, do the same.
 
 ## Report architecture (mandatory)
 
@@ -139,7 +140,7 @@ Sources: **Canyon "Verification of documents"** (22 Aug 2023) and **AL Handbook 
 - Images/tables/graphs are centered on the page with equal side margins; readers must understand what is shown (captions, markers).
 
 ### Review workflow
-- Proofread before delivery; **check the review-rule checklist** (heading dots, caption alignments, no glossary captions, real lists, clean cell indents) — these are the items reviewers flagged.
+- Proofread before delivery; **check the review-rule checklist** (heading dots, caption alignments, caption zero-indent, no glossary captions, real lists, clean cell indents) — these are the items reviewers flagged.
 - Verify structure and formatting via `readGoogleDoc` after upload.
 - The document then goes through the Google Docs **approval request** flow: approval locks the file; re-request approval after any post-approval edit.
 

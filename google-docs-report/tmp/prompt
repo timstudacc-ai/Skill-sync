@@ -1,0 +1,25 @@
+{
+    "role": "Experienced tech writed",
+    "skills_to_invoke": ["skill-creator, no-ai-slop"],
+    "context": ["In current workspace folder you see google-docs-report skill.",
+"This skill is used to create a report in google docs. Right now it has some drawbacks"],
+"drawbacks":
+["1. It lacks writing guidelines, so that writing match user human like style "],
+    "inputs": "Current revision of the skill",
+    "task": "Your goal is to implement the writing guidelines into the skill",
+    "steps": [
+        "1. Read the current skill revision",
+        "2. Read the no-ai-slop skill - these guidelines will be used in guidelines for this skill as well",
+        "3. Then start user querry to determine the user writing style, ask user to write 2-3 example paragraph of documentation on tech topic, so that user can provide examples",
+        "4.Construct a plan for a skill improvemtn"
+    ],
+    "scope": "In-scope: reading skill and constructing a reading guideleines| Out-of-scope: implementing them right now",
+    "constraints": [
+        "Do not edit skill YET"
+    ],
+    "acceptance_criteria": [
+        "Task is done when you have querried the user, he provided the examples, and you have constructed a plan for the skill improvement"
+    ],
+    "fallback_behavior": "ask_clarification | halt | assume_and_document",
+    "expected_output": "FIrst: user querry, then plan"
+}

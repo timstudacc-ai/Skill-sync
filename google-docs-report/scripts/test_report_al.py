@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from generate_report import (
     new_document, add_heading, add_paragraph, add_bullet_list,
-    add_numbered_list, add_table, add_caption, add_page_break,
+    add_numbered_list, add_table, add_table_caption, add_page_break,
     save, verify_integrity,
 )
 
@@ -64,7 +64,7 @@ add_paragraph(doc,
     "The portrait template supports tables, bulleted lists, numbered"
     " lists, and formatted text. Tables are auto-fit to the portrait"
     " page's usable text width (A4 width minus margins).")
-add_caption(doc, "Table 1.", "Output format comparison")
+add_table_caption(doc, "Table 1.", "Output format comparison")
 add_table(doc,
     headers=["Format", "Convertible", "Notes"],
     rows=[

@@ -20,7 +20,8 @@ API (import as `from generate_report import ...`):
     verify_integrity(path) -> dict of bool checks
     add_heading(doc, text, level=1)
     add_paragraph(doc, text='', *, bold=False, italic=False, alignment=None)
-    add_caption(doc, label, text=None)              # "Table 1. - Description"
+    add_table_caption(doc, label, text=None)        # "Table 1. - Description", LEFT
+    add_figure_caption(doc, label, text=None)       # "Figure 1. - Description", CENTER
     add_bullet_list(doc, items)                     # items: list[str]
     add_numbered_list(doc, items)                   # items: list[(text, appendix)]
     add_table(doc, headers, rows, *, caption=None)  # manual borders, bold header
@@ -39,7 +40,7 @@ from docx.shared import Pt
 
 __all__ = [
     "new_document", "save", "verify_integrity",
-    "add_heading", "add_paragraph", "add_caption",
+    "add_heading", "add_paragraph",
     "add_table_caption", "add_figure_caption",
     "add_bullet_list", "add_numbered_list", "add_table",
     "add_glossary_table", "add_page_break",
@@ -205,19 +206,6 @@ def add_paragraph(
     return p
 
 
-def add_caption(doc: Document, label: str, text: str | None = None) -> object:
-    """Add a small caption line, e.g. ``add_caption(doc, "Table 1.", "Output")``.
-
-    Renders as ``Table 1. - Output`` (single italic paragraph). The template's
-    own examples use a space around the dash.
-    """
-    full = label if text is None else f"{label} - {text}"
-    p = doc.add_paragraph()
-    run = p.add_run(full)
-    run.italic = True
-    return p
-
-
 def add_table_caption(doc: Document, label: str, text: str | None = None) -> object:
     """Caption for a data table — LEFT-aligned (corporate review comment #5).
 
@@ -237,7 +225,12 @@ def add_figure_caption(doc: Document, label: str, text: str | None = None) -> ob
 
 
 def _add_caption(doc: Document, label: str, text: str | None, alignment) -> object:
-    """Shared caption renderer: bold-italic label, italic description."""
+    """Shared caption renderer: bold-italic label, italic description.
+
+    The template's docDefaults give every plain paragraph a ~1 cm first-line
+    indent; captions must zero it explicitly or a LEFT caption lands off the
+    margin and a CENTER caption sits off the page centre.
+    """
     p = doc.add_paragraph()
     run = p.add_run(label)
     run.bold = True
@@ -246,6 +239,8 @@ def _add_caption(doc: Document, label: str, text: str | None, alignment) -> obje
         rest = p.add_run(f" - {text}")
         rest.italic = True
     p.alignment = alignment
+    p.paragraph_format.left_indent = Pt(0)
+    p.paragraph_format.first_line_indent = Pt(0)
     return p
 
 
