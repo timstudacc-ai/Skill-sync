@@ -14,7 +14,8 @@ Two conversion paths:
 
 Modes:
   auto     detect the generator automatically (default)
-  doxygen  parse navtreedata.js NAVTREE for the exact page/section tree
+  doxygen  parse navtreedata.js NAVTREE (falls back to menudata.js for
+      Doxygen 1.9+ top-nav sites) for the exact page/section tree
   crawl    BFS-crawl same-host .html links (MkDocs, Docusaurus, plain HTML)
 
 Usage:
@@ -90,7 +91,8 @@ def make_fetcher(ua, delay):
         if url not in cache:
             for attempt in range(3):
                 try:
-                    req = urllib.request.Request(url, headers={"User-Agent": ua})
+                    req = urllib.request.Request(url, headers={
+                        "User-Agent": ua, "Accept": "*/*"})
                     with urllib.request.urlopen(req, timeout=30) as r:
                         cache[url] = r.read().decode("utf-8", "replace")
                     break
@@ -111,6 +113,14 @@ def sanitize(name):
     return re.sub(r"[\s-]+", "_", name)[:60] or "page"
 
 
+def canon_url(u):
+    """Canonical page URL: drop the trailing slash used for queue dedupe
+    (foo.html/ -> foo.html) so fetches, provenance links and the
+    included-page set all share one spelling. Strict servers 404 on
+    foo.html/; trailing-slash directory URLs are kept as-is."""
+    return u[:-1] if u.endswith((".html/", ".htm/")) else u
+
+
 def normalize_unicode(raw):
     """Non-breaking spaces are normalized FIRST -- they otherwise silently
     defeat exact-match boilerplate stripping. Zero-width joiners are
@@ -119,6 +129,21 @@ def normalize_unicode(raw):
 
 
 # ---------------------------------------------------------------- navigation
+
+def nav_urls(node):
+    """Unique-able .html descendant urls of a nav node. Anchor-only entries
+    (page.html#frag) are skipped: their text already lives inside the
+    parent page's HTML."""
+    got = []
+    for ch in node:
+        if isinstance(ch, list):
+            # recurse into every list child; a bare container list has a
+            # non-string second element and must not be skipped
+            if len(ch) >= 2 and isinstance(ch[1], str) and ch[1].endswith(".html"):
+                got.append(ch[1])
+            got.extend(nav_urls(ch))
+    return got
+
 
 def navtree_sections(fetch, base):
     """Doxygen: parse var NAVTREE in navtreedata.js.
@@ -156,17 +181,6 @@ def navtree_sections(fetch, base):
     tree, _ = parse(0)
     sections = []
 
-    def urls(node):
-        got = []
-        for ch in node:
-            if isinstance(ch, list):
-                # recurse into every list child; a bare container list has a
-                # non-string second element and must not be skipped
-                if len(ch) >= 2 and isinstance(ch[1], str) and ch[1].endswith(".html"):
-                    got.append(ch[1])
-                got.extend(urls(ch))
-        return got
-
     # unwrap wrapper lists: NAVTREE = [ [ "Site", "index.html", [sec, ...] ] ]
     # descend through single-entry wrappers to reach the root entry.
     node = tree
@@ -187,7 +201,7 @@ def navtree_sections(fetch, base):
             pages = []
             if top[1].endswith(".html"):
                 pages.append(top[1])
-            pages.extend(urls(top))
+            pages.extend(nav_urls(top))
             seen, uniq = set(), []
             for p in pages:
                 if p not in seen:
@@ -200,10 +214,101 @@ def navtree_sections(fetch, base):
     return sections
 
 
+def menudata_sections(fetch, base):
+    """Doxygen 1.9+ top-nav layout: navigation lives in menudata.js
+    (var menudata), not navtreedata.js. Returns (sections, index_urls):
+    sections is [(title, [page_url, ...])] built from the top-level menu
+    entries; index_urls is the set of full URLs of every menu page -- the
+    menu lists only index pages, so each of them must be expanded with its
+    child pages regardless of page length."""
+    js = fetch(urllib.parse.urljoin(base, "menudata.js"))
+    if not js or "var menudata" not in js:
+        return [], set()
+    start = js.index("var menudata")
+    toks = re.findall(r'\{|\}|\[|\]|"(?:[^"\\]|\\.)*"|text:|url:|children:',
+                      js[start:])
+
+    def parse_obj(i):
+        node = ["", "", []]
+        i += 1
+        while i < len(toks) and toks[i] != "}":
+            if toks[i] == "text:" and i + 1 < len(toks):
+                node[0] = toks[i + 1].strip('"')
+                i += 2
+            elif toks[i] == "url:" and i + 1 < len(toks):
+                node[1] = toks[i + 1].strip('"')
+                i += 2
+            elif toks[i] == "children:":
+                node[2], i = parse_arr(i + 1)
+            else:
+                i += 1
+        return node, i + 1
+
+    def parse_arr(i):
+        out = []
+        while i < len(toks) and toks[i] != "]":
+            if toks[i] == "{":
+                node, i = parse_obj(i)
+                out.append(node)
+            else:
+                i += 1
+        return out, i + 1
+
+    kids = []
+    for i, t in enumerate(toks):
+        if t == "children:":
+            kids, _ = parse_arr(i + 1)
+            break
+
+    sections, index_urls = [], set()
+    for top in kids:
+        if len(top) < 2 or not isinstance(top[1], str) \
+                or not top[1].endswith(".html"):
+            continue
+        pages, seen = [], set()
+        for p in [top[1]] + nav_urls(top):
+            if p not in seen:
+                seen.add(p)
+                pages.append(p)
+                index_urls.add(urllib.parse.urljoin(base, p))
+        sections.append((top[0], pages))
+    return sections, index_urls
+
+
 def crawl_pages(fetch, base, max_pages):
-    """Generic: BFS same-host .html links. Returns ordered list of URLs."""
+    """Generic: BFS same-host .html links. Returns ordered list of URLs.
+
+    Also follows directory-style ("pretty URL") links such as
+    href="getting_started/" emitted by MkDocs Material and similar
+    generators; such links are normalized to a trailing slash so the same
+    page is never queued twice. Asset URLs (.css/.js/.png/...) are ignored."""
     start = urllib.parse.urlparse(base)
     seen, order, queue = set(), [], [base.rstrip("/") + "/"]
+
+    def is_page(u):
+        p = urllib.parse.urlparse(u)
+        if p.netloc != start.netloc or not p.path:
+            return False
+        # start.path may be a file (e.g. /en/jazzy/index.html); the prefix
+        # check must use its directory, or every child link is rejected.
+        base_path = start.path if start.path.endswith("/") \
+            else start.path.rsplit("/", 1)[0] + "/"
+        if not p.path.startswith(base_path):
+            return False
+        return p.path.endswith(".html") or p.path.endswith(".htm") \
+            or p.path.endswith("/")
+
+    def is_doc(u):
+        stem = urllib.parse.urlparse(u).path \
+            .rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        return stem not in ("genindex", "search") \
+            and not stem.endswith("_source")
+
+    def norm(u):
+        if u.endswith("/index.html"):
+            return u[:-len("index.html")]
+        return u
+
     while queue and len(order) < max_pages:
         url = queue.pop(0)
         if url in seen:
@@ -213,10 +318,14 @@ def crawl_pages(fetch, base, max_pages):
         if not html:
             continue
         order.append(url)
-        for m in re.finditer(r'href="([^"#]+\.html?)"', html):
+        for m in re.finditer(r'href="([^"#?]+)"', html):
             u = urllib.parse.urljoin(url, m.group(1))
-            p = urllib.parse.urlparse(u)
-            if p.netloc == start.netloc and u not in seen:
+            if not is_page(u) or not is_doc(u):
+                continue
+            u = norm(u)
+            if not u.endswith("/") and not u.endswith((".html", ".htm")):
+                u += "/"
+            if u not in seen and u not in queue:
                 queue.append(u)
     return order
 
@@ -302,8 +411,8 @@ def to_text(html, extra_strip=()):
 
 def extract_content_html(html):
     """Return the inner HTML of the main content container, with chrome
-    (nav/header/footer/aside/script/style/...) removed. Falls back to
-    <body>, then to the whole document."""
+    (nav/header/footer/aside/sidebar/script/style/...) removed. Falls back
+    to <body>, then to the whole document."""
     soup = bs4.BeautifulSoup(html, "html.parser")
     el = None
     for sel in ("#doc-content", "main", "article", '[role="main"]'):
@@ -322,21 +431,46 @@ def extract_content_html(html):
         el = soup.body
     if el is None:
         el = soup
+    # the selected container may be broader than the page body (e.g. MkDocs
+    # Material's <main> also wraps the sidebars and custom header widgets);
+    # descend into a nested <article> when one exists
+    if el.name != "article":
+        inner = el.find("article")
+        if inner is not None:
+            el = inner
     for tag in el.find_all(["script", "style", "nav", "header", "footer",
                             "aside", "noscript", "svg", "form", "button"]):
         tag.decompose()
-    return el.decode_contents()
+    # sidebar / chrome widgets that live outside semantic chrome tags
+    # (MkDocs Material custom sidebars, edit-page buttons, watermarks)
+    for tag in el.find_all(
+            class_=re.compile(r"md-sidebar|md-content__button|"
+                               r"md-typeset__watermark|md-feedback")):
+        tag.decompose()
+    out = el.decode_contents()
+    # Doxygen 1.9.x keeps the page title in a sibling .header div outside
+    # the .contents container -- prepend it so pages stay titled
+    if not el.find(class_="headertitle"):
+        head = soup.find(class_="headertitle")
+        if head:
+            title = head.get_text(" ", strip=True)
+            if title:
+                h = soup.new_tag("h1")
+                h.string = title
+                out = str(h) + "\n" + out
+    return out
 
 
 def absolutize_urls(md, page_url):
     """Rewrite relative link/image URLs to absolute ones, so the .md stays
-    usable when read offline. Images and links share the [..](..) shape."""
+    usable when read offline. Images and links share the [..](..) shape;
+    optional trailing ` "title"` parts are kept."""
     def fix(m):
-        label, url = m.group(1), m.group(2)
+        label, url, title = m.group(1), m.group(2), m.group(3) or ""
         if url.startswith(EXTERNAL_URL_PREFIXES):
             return m.group(0)
-        return f"[{label}]({urllib.parse.urljoin(page_url, url)})"
-    return re.sub(r"\[([^\]]*)\]\(([^)\s]+)\)", fix, md)
+        return f"[{label}]({urllib.parse.urljoin(page_url, url)}{title})"
+    return re.sub(r'\[([^\]]*)\]\(([^)\s]+)(\s+"[^"]*")?\)', fix, md)
 
 
 def dedent_fences(md):
@@ -366,6 +500,44 @@ def dedent_fences(md):
     return "\n".join(out)
 
 
+def pre_to_fenced(pre_html, h):
+    """Convert one <pre> element (standalone) into a fenced ``` block with
+    its common-indent artifact stripped. Genuine relative indentation is
+    preserved."""
+    raw = h.handle(pre_html)
+    raw = normalize_unicode(raw)
+    m = re.search(r"\[code\](.*?)\[/code\]", raw, re.S)
+    if not m:
+        return ""
+    lines = m.group(1).split("\n")
+    while lines and not lines[-1].strip():
+        lines.pop()
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    if not lines:
+        return ""
+    ind = min((len(ln) - len(ln.lstrip()) for ln in lines if ln.strip()),
+              default=0)
+    lines = [ln[ind:] if ln.strip() else "" for ln in lines]
+    return "\n".join(lines)
+
+
+def splice_pre_blocks(md, fenced_blocks):
+    """Replace @@PREBLOCKi@@ tokens with the pre-converted fenced blocks.
+    A token on its own line (possibly indented) is replaced by the whole
+    line so the fence always starts at column 0; an inline token is
+    replaced by a newline + fence."""
+    for i, block in enumerate(fenced_blocks):
+        tok = f"@@PREBLOCK{i}@@"
+        if tok not in md:
+            continue
+        fenced = "```\n" + block + "\n```"
+        md = re.sub(r"^[ \t]*" + re.escape(tok) + r"[ \t]*$",
+                    lambda m, f=fenced: f, md, flags=re.M)
+        md = md.replace(tok, "\n" + fenced)
+    return md
+
+
 def to_markdown(html, page_url, extra_strip=()):
     """HTML -> cleaned Markdown via html2text (venv). Content-container
     extraction happens on the HTML side so nav/search chrome never reaches
@@ -379,11 +551,31 @@ def to_markdown(html, page_url, extra_strip=()):
     h.pad_table = True
 
     content = extract_content_html(html)
+    # convert <pre> blocks separately (standalone) and splice them back via
+    # tokens: html2text's in-context rendering of <pre> (e.g. inside list
+    # items) indents continuation lines inconsistently, which would corrupt
+    # genuine code indentation. <pre> inside tables is left alone -- those
+    # cells degrade to plain text anyway.
+    soup = bs4.BeautifulSoup(content, "html.parser")
+    fenced_blocks = []
+    for i, pre in enumerate(soup.find_all("pre")):
+        if pre.find_parent("table"):
+            continue
+        fenced = pre_to_fenced(str(pre), h)
+        fenced_blocks.append(fenced)
+        pre.replace_with(soup.new_string(
+            f"@@PREBLOCK{len(fenced_blocks) - 1}@@"))
+    content = str(soup)
+
     md = h.handle(content)
     md = normalize_unicode(md).replace("&nbsp;", " ")
-    # mark_code wraps <pre> in [code]...[/code]; turn those markers into
-    # ``` fences so the output is real fenced Markdown
-    md = re.sub(r"\[/?code\][ \t]*", "```", md)
+    # any <pre> that escaped tokenization (e.g. inside tables) still gets
+    # its [code] markers turned into fences; the opening marker may be
+    # glued to the first code line, so put fences on their own lines
+    md = re.sub(r"\[code\][ \t]*\n?", "```\n", md)
+    md = re.sub(r"\n?[ \t]*\[/code\]", "\n```", md)
+    md = absolutize_urls(md, page_url)
+    md = splice_pre_blocks(md, fenced_blocks)
     pats = [re.compile(x) for x in BOILERPLATE] + \
            [re.compile(x) for x in extra_strip]
     lines = [ln.rstrip() for ln in md.split("\n")
@@ -455,17 +647,28 @@ def main():
     say = (lambda *x: None) if a.quiet else print
 
     sections = []
+    force_expand = set()
     if a.mode in ("auto", "doxygen"):
         sections = navtree_sections(fetch, base)
+        if not sections:
+            sections, force_expand = menudata_sections(fetch, base)
     if sections and a.mode != "crawl":
-        say(f"[mode] doxygen navtree: {len(sections)} sections")
+        src = "menudata" if force_expand else "navtree"
+        say(f"[mode] doxygen {src}: {len(sections)} sections")
     else:
         pages = crawl_pages(fetch, base, a.max_pages)
         say(f"[mode] crawl: {len(pages)} pages")
+        # group by first path segment BELOW the base URL, so sites served
+        # under a subpath (e.g. docs.nav2.org/rolling/) still split cleanly
+        # into documentation sections
+        base_parts = [x for x in urllib.parse.urlparse(base).path.split("/") if x]
+        nb = len(base_parts)
         groups = {}
         for u in pages:
             parts = [x for x in urllib.parse.urlparse(u).path.split("/") if x]
-            key = parts[0] if len(parts) > 1 else "root"
+            key = parts[nb] if len(parts) > nb else "root"
+            if key.endswith((".html", ".htm")):
+                key = key.rsplit(".", 1)[0]
             groups.setdefault(key, []).append(u)
         order = ["root"] + [k for k in groups if k != "root"]
         sections = [(k, groups[k]) for k in order if k in groups]
@@ -486,17 +689,38 @@ def main():
                      "dynsections", "tabs", "classes", "functions",
                      "functions_vars"}
     EXCLUDE_PREFIXES = ("dir_",)
+    # Doxygen source-browser pages (foo.hpp_source.html): code, not docs
+    EXCLUDE_SUFFIXES = ("_source",)
     INDEX_MIN_CHARS = a.index_min   # shorter page text => index page, expand
 
     def children_of(url):
         out = []
-        for m in re.finditer(r'href="([^"#]+\.html?)"', fetch(url)):
-            child = urllib.parse.urljoin(url, m.group(1))
+        parent_stem = urllib.parse.urlparse(url).path \
+            .rsplit("/", 1)[-1].rsplit(".", 1)[0]
+        for m in re.finditer(r'href="([^"#?]+)"', fetch(url)):
+            child = canon_url(urllib.parse.urljoin(url, m.group(1)))
             cu = urllib.parse.urlparse(child)
             stem = cu.path.rsplit("/", 1)[-1].rsplit(".", 1)[0]
             if cu.netloc != urllib.parse.urlparse(base).netloc:
                 continue
-            if stem in EXCLUDE_STEMS or stem.startswith(EXCLUDE_PREFIXES):
+            if not cu.path.startswith(urllib.parse.urlparse(base).path):
+                continue
+            if not (cu.path.endswith(".html") or cu.path.endswith(".htm")
+                    or cu.path.endswith("/")):
+                continue
+            if stem in EXCLUDE_STEMS or stem.startswith(EXCLUDE_PREFIXES) \
+                    or stem.endswith(EXCLUDE_SUFFIXES):
+                continue
+            # Doxygen compound pages have one owning index each: namespace
+            # pages are claimed via namespace* index pages, class/struct
+            # pages via the class list -- cross-index pages (e.g.
+            # namespaces.html listing class pages) must not steal another
+            # section's children
+            if stem.startswith("namespace"):
+                if not parent_stem.startswith("namespace"):
+                    continue
+            elif stem.startswith(("class", "struct")) \
+                    and parent_stem.startswith("namespace"):
                 continue
             out.append(child)
         return out
@@ -513,13 +737,17 @@ def main():
     for title, pages in sections:
         entries = []
         for p in pages:
-            url = urllib.parse.urljoin(base, p)
+            url = canon_url(urllib.parse.urljoin(base, p))
             if url in included:
                 continue
             included.add(url)
             say(f"  fetching {url}")
             entries.append((url, convert(url)))
-            if len(entries[-1][1]) < INDEX_MIN_CHARS:
+            # menudata mode: exactly the menu pages are index pages; other
+            # modes: short pages are Doxygen group listings to expand
+            is_index = url in force_expand if force_expand else \
+                len(entries[-1][1]) < INDEX_MIN_CHARS
+            if is_index:
                 for child in children_of(url):
                     if child not in included:
                         included.add(child)
