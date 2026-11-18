@@ -170,8 +170,8 @@ def render_docx(r, path):
             space_after=6)
     _docx_p(doc, r.topic, c, bold=True, indent=False)
     _docx_p(doc, f"Мета роботи: {r.purpose}", j)
+    _docx_p(doc, "Хід роботи", c, bold=True, indent=False, space_after=6)
     if r.variant is not None:
-        _docx_p(doc, "Хід роботи", c, bold=True, indent=False, space_after=6)
         _docx_p(doc, f"Варіант {r.variant}", c, bold=True, indent=False)
 
     for block in r.body:
@@ -241,10 +241,9 @@ def render_pdf(r, path):
 
     univ = "</p><p class='c'>".join(esc(r.university).split("\n"))
     concl = "".join(f"<p>{esc(x)}</p>" for x in r.conclusions)
-    variant_html = ""
+    variant_html = '<p class="c gap">Хід роботи</p>'
     if r.variant is not None:
-        variant_html = ('<p class="c gap">Хід роботи</p>'
-                        f'<p class="c">Варіант {r.variant}</p>')
+        variant_html += f'<p class="c">Варіант {r.variant}</p>'
     html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><style>
     @page {{ size: A4; margin: 30mm 20mm 20mm 30mm; }}
     body {{ font-family: "{MAIN_FONT}", "{FALLBACK_SERIF}", serif;
