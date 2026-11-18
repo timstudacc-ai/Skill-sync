@@ -107,7 +107,7 @@ Section guidelines:
 - **Introduction** — 2-3 sentences: what the document is about, for whom, what problem it solves.
 - **Purpose** — the clear goal of the document.
 - **References** — mandatory link to the Hubstaff task; internal resources as chips with description; remove internal links from client-facing documents. No raw URLs anywhere: use a meaningful short label plus a link. If the exact target document is not known at generation time, leave a placeholder (`Short label - [link]`) instead of inventing full official titles.
-- **Abbreviations/Definitions** — glossary of specific terms used. Render as a **glossary table** via `add_glossary_table()`: borderless, no header row, bold first column, left-aligned, **NO caption above it** (review rule #3). Do NOT use a bordered data table with a header row here.
+- **Abbreviations/Definitions** — glossary of specific terms used. Render as a **glossary table** via `add_glossary_table()`: borderless, no header row, bold first column, left-aligned, **NO caption above it** (review rule #3). Do NOT use a bordered data table with a header row here. Do not put a terminal period after a definition or expansion; glossary entries are fragments, not sentences. Correct: `Nav2 | ROS 2 navigation stack`; incorrect: `Nav2 | ROS 2 navigation stack.` Apply the same rule to acronyms and release names, e.g. `Jazzy | ROS 2 Jazzy Jalisco distribution release` (not `...release.`). Check the glossary in both directions: every entry listed in section 4 must actually be used in the report, and every abbreviation, acronym, or defined term used in the report must be included in section 4.
 - **Report results** — the main body: methodology, results, analysis, visualization. Prefer prose over tables for descriptive content; use tables only for genuinely tabular data.
 - **Conclusions** — what the data means, recommendations, limitations.
 
@@ -140,7 +140,7 @@ Sources: **Canyon "Verification of documents"** (22 Aug 2023) and **AL Handbook 
 - Images/tables/graphs are centered on the page with equal side margins; readers must understand what is shown (captions, markers).
 
 ### Review workflow
-- Proofread before delivery; **check the review-rule checklist** (heading dots, caption alignments, caption zero-indent, no glossary captions, real lists, clean cell indents) — these are the items reviewers flagged.
+- Proofread before delivery; **check the review-rule checklist** (heading dots, caption alignments, caption zero-indent, no glossary captions, no terminal periods in glossary definitions/expansions, bidirectional glossary coverage, real lists, clean cell indents) — these are the items reviewers flagged.
 - Verify structure and formatting via `readGoogleDoc` after upload.
 - The document then goes through the Google Docs **approval request** flow: approval locks the file; re-request approval after any post-approval edit.
 
